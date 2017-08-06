@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Macro</title>
+    <link rel="stylesheet" href="../defaulter.css" type="text/css">
+    <link rel="stylesheet" href="../nano/dist/css/nanogallery2.min.css">
+    <link rel="stylesheet" href="../style.css" type="text/css">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Dancing+Script' rel='stylesheet' type='text/css'>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="../nano/dist/jquery.nanogallery2.js"></script>
+    <link href="../font-awesome/css/font-awesome.css" rel='stylesheet' type='text/css'>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery.jssocials/1.4.0/jssocials.min.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://cdn.jsdelivr.net/jquery.jssocials/1.4.0/jssocials.css" />
+    <link type="text/css" rel="stylesheet" href="https://cdn.jsdelivr.net/jquery.jssocials/1.4.0/jssocials-theme-flat.css" />
+    <link rel="stylesheet" type="text/css" media="only screen and (max-device-width: 480px)" href="../mobile.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <script src="https://www.w3counter.com/tracker.js?id=111442"></script>
+
+</head>
+<body id="fullbody">
+<div>
+    <header>
+        <div class="navbar">
+            <h1 class="headergreeting" ><a href="../index.html">Welcome to Pietowski Photo</a></h1>
+            <ul id="headeritems">
+                <li><a href="index.html">Themes</a></li>
+                <li><a href="../events/index.html">Events</a></li>
+                <li><a href="../contact.html">Contact</a></li>
+                <li><a href="../about.html">About</a></li>
+            </ul>
+        </div>
+    </header>
+</div>
+<div id="share"></div>
+<div class="setgallery">
+    <div id="my_nanogallery2"></div>
+    <script>
+        jQuery(document).ready(function () {
+
+            function fnOpenNewTab(e) {
+                jQuery('.nGY2Viewer a').on( "click", function(e) {
+                    window.open( $(this).attr("href"), '_blank');
+                    e.stopPropagation();
+                    e.preventDefault();
+                });
+                return true;
+            }
+
+            jQuery("#my_nanogallery2").nanogallery2({
+                kind: 'flickr',
+                userID: '87413816@N04',
+                album: '72157666307673352',
+                allowHTMLinData: true,
+                thumbnailHeight: "275 Sauto Mauto",
+                thumbnailWidth: "auto S90 M130",
+                thumbnailDisplayTransition: "fadeIn",
+                displayDescription: true,
+                thumbnailLabel: {display: false},
+                thumbnailHoverEffect2: "image_scale_1.00_1.20",
+                fnImgDisplayed: fnOpenNewTab
+            });
+        });
+    </script>
+
+    <div id="disqus_thread"></div>
+    <script>
+
+        /**
+         *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+         *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+        /*
+         var disqus_config = function () {
+         this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+         this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+         };
+         */
+        (function() { // DON'T EDIT BELOW THIS LINE
+            var d = document, s = d.createElement('script');
+            s.src = 'https://pietowskifotomacro.disqus.com/embed.js';
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</div>
+
+
+
+</div>
+
+
+<script>
+    $("#share").jsSocials({
+        shares: ["email", "twitter", "facebook", "googleplus", "pinterest", "stumbleupon"]
+    });
+</script>
+
+</body>
+</html>

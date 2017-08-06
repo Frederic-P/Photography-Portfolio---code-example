@@ -1,0 +1,159 @@
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.holdinjected {
+    visibility: hidden;
+}
+
+.navbar {
+    display: inline;
+    margin: 0 auto;
+}
+
+.headergreeting {
+    font-size: 80%;
+}
+
+#headeritems{
+    justify-content: space-between;
+}
+
+#headeritems li {
+    padding: 10px;
+    font-size: medium;
+}
+
+#headeritems a:hover {
+    border-width: 5px 0 5px 0;
+}
+
+#share {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: #0F151E;
+    display: inline-flex;
+    margin: 0;
+    padding: 0;
+    z-index: 2;
+
+}
+
+.jssocials-share {
+    width: 9.5vw;
+}
+
+#fullbody {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.album {
+    margin: 0;
+    padding: 0;
+    width: 40vw;
+    height: 40vw;
+    min-width: 100px;
+    min-height: 100px;
+}
+
+.softcontainer h1, .softcontainer a{
+    text-align: center;
+    text-decoration: none;
+    color: #676D75;
+    font-family: "Open Sans", sans-serif;
+    font-size: 22px;
+    background-color: RGBA(15,20,31,0.8);
+    padding: 5px 0 5px 0;
+    overflow: hidden;
+}
+
+#containalbum{
+    margin-left: 0;
+}
+
+.settext, .eventdisplay{
+    margin-bottom: 75px;
+}
+.eventdisplay{
+    margin-left: 0;
+}
+
+.settext h1, #event_title {
+    font-size: 1.35em;
+    padding: 0.75em;
+    margin-bottom: 0.5em;
+}
+
+.settext h2 {
+    font-size: 1.1em;
+    padding: 0.6em;
+    margin-bottom: 0.5em;
+}
+
+.settext p, .event_detail {
+    font-size: 1.2em;
+    line-height: 110%;
+}
+
+.lister{
+    font-size: 1.5em;
+}
+
+.eventdisplay{
+    width: 100%;
+    margin-left: 0;
+    min-width: 300px;
+    min-height: 0;
+
+}
+.eventslice{
+    width: 95%;
+}
+
+.eventcontainer{
+    width: 100%;
+    margin-top: 0.5vh;
+    height: 21.5vh;
+    overflow: hidden;
+    min-height: 120px;
+}
+
+.eventtitle{
+    font-size: large;
+}
+
+.holdeventtext p{
+    font-size: small;
+}
+
+.move{
+    width: 70px;
+    height: 32px;
+}
+
+#dynamicpos {
+    font-size: 120%;
+}
+
+.positionholder{
+    position: static;
+    bottom: inherit;
+    min-width: 0;
+    width: 100%;
+    margin: 0;
+    padding-bottom: 50px;
+}
+
+.addinfo {
+    display: none;
+}
+
+.inlineimage {
+    padding: 0;
+    width: 100%;
+    margin: 0 auto;
+}
