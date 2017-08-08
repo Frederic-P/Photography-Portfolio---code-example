@@ -24,9 +24,9 @@ $(document).ready(function() {
         var progress = current + " of " + (xof) +".";
         $("#dynamicpos").empty().append("Page: " + progress);
 
-        console.log("totaal = " + l);
-        console.log("rest " + rest);
-        console.log("volle pags = " +full);
+        //console.log("totaal = " + l);
+        //console.log("rest " + rest);
+        //console.log("volle pags = " +full);
 
 
         for (var n = (l-1); n > l-4; n--) {
