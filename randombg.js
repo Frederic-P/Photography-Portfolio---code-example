@@ -27,7 +27,15 @@ $(document).ready(function() {
 
     $('<img/>').attr('src', backimg).on('load', function() {
         $("#load").css("visibility", "hidden");
-        $("#postload").css("visibility", "visible").hide().fadeIn(1000);
+        $("#setbackimage").css("visibility", "visible").hide().fadeIn(1000);
+        $(".holdinjected").css("visibility", "hidden");
+        setTimeout(function(){
+            $(".holdinjected, #share, header, .jssocials-shares").css("visibility", "visible").hide().fadeIn(1000);
+            setTimeout(function () {
+                $("#postload").css("visibility", "visible");
+            },1000)
+        }, 1000);
+
     });
 
 
