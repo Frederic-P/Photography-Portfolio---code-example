@@ -4,7 +4,7 @@
  * Sources:  https://github.com/nanostudio-org/nanogallery2
  *
  * License:  GPLv3 and commercial licence
- * 
+ *
  * Requirements:
  *  - jQuery (http://www.jquery.com) - version >= 1.7.1
  *
@@ -14,27 +14,15 @@
  *  - imagesloaded (https://github.com/desandro/imagesloaded) - is embebed
  *  - hammer.js (http://hammerjs.github.io/) - is embeded
  *  - screenfull.js (https://github.com/sindresorhus/screenfull.js) - is embeded
- *  - webfont generated with http://fontello.com - based on Font Awesome Copyright (C) 2012 by Dave Gandy (http://fortawesome.github.com/Font-Awesome/)
+ *  - webfont generated with http://fontello.com - mainly based on Font Awesome Copyright (C) 2012 by Dave Gandy (http://fontawesome.io/)
  *  - ICO online converter: https://iconverticons.com/online/
  */
 
 /*
 
-v1.n.alpha - do not use
-- new: ImagesLoaded now in version 4.1.1
-- fixed: old Picasa albums not retrieved (for data before 09/02/2017)
-- new: thumbnailDisplayTransition 'slideUp' and 'slideDown': distance can be defined (example: 'slideUp_200')
-- new: thumbnailDisplayTransition 'flipDown' (and 'flipDown_N'), 'flipUp (and 'flipUp_N'), 'slideUp2' (and 'slideUp2_N'), 'slideDown2' (and 'slideDown2_N'), 'slideRight' (and 'slideRight_N'), 'slideLeft' (and 'slideLeft_N')
-- new: fnThumbnailL1DisplayEffect, thumbnailL1DisplayTransition, thumbnailL1DisplayTransitionDuration, thumbnailL1DisplayInterval
-- new: share to VK.com
-- fixed: share to Google+
-- fixed: #37 Error using custom colors for colorSchemeViewer breaks nanoGallery2
 
-TODO:
-- locationHash on false -> remove share?
+*/
 
-*/ 
- 
 
 // ###########################################
 // ##### nanogallery2 as a JQUERY PLUGIN #####
@@ -43,35 +31,28 @@ TODO:
   "use strict";
 
   $.nanogallery2 = function (elt, options) {
-  
+
     // To avoid scope issues, use '_this' instead of 'this'
     // to reference this class from internal events and functions.
     var _this = this;
 
     // Access to jQuery and DOM versions of element
-    _this.$e = jQuery(elt);
-    _this.e = elt;
+    _this.$e  = jQuery(elt);
+    _this.e   = elt;
 
     // Add a reverse reference to the DOM object
     _this.$e.data('nanogallery2data', _this);
 
     _this.init = function () {
-  
+
       // define these global objects only once per HTML page
       if (typeof window.NGY2Item === 'undefined') {
-  
+
         window.NGY2Tools = (function () {
 
           function NGY2Tools() {
             var nextId = 1;                   // private static --> all instances
           }
-
-          //+ Jonas Raoni Soares Silva
-          //@ http://jsfromhell.com/array/shuffle [v1.0]
-          NGY2Tools.AreaShuffle = function (o) {
-            for (var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
-            return o;
-          };
 
           // check album name - albumList/blackList/whiteList
           NGY2Tools.FilterAlbumName = function( title, ID ) {
@@ -99,12 +80,12 @@ TODO:
               if( this.blackList !== null ) {
                 //blackList : ignore album cointaining one of the specified keyword in the title
                 for( var j=0; j<this.blackList.length; j++) {
-                  if( s.indexOf(this.blackList[j]) !== -1 ) { 
+                  if( s.indexOf(this.blackList[j]) !== -1 ) {
                     return false;
                   }
                 }
               }
-              
+
               return true;
             }
           };
@@ -125,14 +106,14 @@ TODO:
               //alert('nanoGALLERY: ' + msg);
             }
           };
-          
-  
+
+
           /** @function NanoConsoleLog */
           /* write message to the browser console */
           NGY2Tools.NanoConsoleLog = function(context, msg) {
             if (window.console) { console.log('nanogallery2: ' + msg + ' ['+context.baseEltID+']'); }
           };
-          
+
 
           /** @function PreloaderDisplay() */
           /* Display/hide preloader */
@@ -145,38 +126,45 @@ TODO:
             }
           };
 
-          
+          //+ Jonas Raoni Soares Silva
+          //@ http://jsfromhell.com/array/shuffle [v1.0]
+          NGY2Tools.AreaShuffle = function (o) {
+            for (var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+            return o;
+          };
+
           /** @function GetImageTitleFromURL() */
           /* retrieve filemane */
-          NGY2Tools.GetImageTitleFromURL = function(imageSRC) {
+          NGY2Tools.GetImageTitleFromURL = function( imageURL ) {
             if( this.O.thumbnailLabel.get('title') == '%filename' ) {
-              return (imageSRC.split('/').pop()).replace('_',' ');
+              return (imageURL.split('/').pop()).replace('_',' ');
             }
-            
+
             if( this.O.thumbnailLabel.get('title') == '%filenameNoExt' ) {
-              var s=imageSRC.split('/').pop();
+              var s=imageURL.split('/').pop();
               return (s.split('.').shift()).replace('_',' ');
             }
-            return imageSRC;
+            // return imageURL;
+            return '';
           };
-          
+
 
           /** @function AlbumPostProcess() */
           /* post process one album based on plugin general parameters  --> sorting/maxItems*/
           NGY2Tools.AlbumPostProcess = function(albumID) {
 
             // this function can probably be optimized....
-          
+
             var sortOrder=this.gallerySorting[this.GOM.curNavLevel];
             var maxItems=this.galleryMaxItems[this.GOM.curNavLevel];
-          
+
             if( sortOrder != '' || maxItems > 0 ) {
-            
+
               // copy album's items to a new array
               var currentAlbum=this.I.filter( function( obj ) {
                 return( obj.albumID == albumID && obj.kind != 'albumUp' );
               });
-        
+
               // sorting options
               switch( sortOrder ) {
                 case 'RANDOM':
@@ -195,27 +183,27 @@ TODO:
                     return( (a.title.toUpperCase() > b.title.toUpperCase()) ? -1 : ((a.title.toUpperCase() < b.title.toUpperCase()) ? 1 : 0) );
                   });
                   break;
-              }     
+              }
 
               // max Items
               if( maxItems > 0 && currentAlbum.length > maxItems ) {
                 currentAlbum.splice(maxItems-1,currentAlbum.length-maxItems );
               }
-              
+
               // remove the albums's items from the global items array
               this.I.removeIf( function( obj ) {
                 return( obj.albumID == albumID && obj.kind != 'albumUp' );
               });
-              
+
               // add the sorted items back to the album
               this.I.push.apply(this.I, currentAlbum);
 
             }
           };
-          
-          
+
+
           return NGY2Tools;
-        })(); 
+        })();
 
         // ====================
         // ===== NGY2Item =====
@@ -236,7 +224,7 @@ TODO:
               ID = itemID;
             }
             this.GetID = function () { return ID; };
-            
+
             // public
             this.kind =                 '';       // 'image', 'album' or 'albumUp'
             this.G =                    null;     // pointer to global instance
@@ -260,6 +248,9 @@ TODO:
               width:  { l1: { xs: 0,  sm: 0, me: 0,  la: 0 , xl: 0  }, lN: { xs: 0 , sm: 0,  me: 0,  la: 0, xl: 0  } },
               height: { l1: { xs: 0,  sm: 0, me: 0,  la: 0 , xl: 0  }, lN: { xs: 0,  sm: 0,  me: 0,  la: 0, xl: 0  } }
             };
+            this.thumbnailImgRevealed   = false;  // thumbnail image already revealed
+            this.imageDominantColors    = null;   // base64 GIF
+            this.imageDominantColor     = null;   // HEX RGB
             this.featured =             false;    // featured element
             this.flickrThumbSizes =     {};       // store URLs for all available thumbnail sizes (flickr)
             this.picasaThumbs =         null;     // store URLs and sizes
@@ -289,7 +280,7 @@ TODO:
           }
 
           // public static
-          
+
           NGY2Item.Get = function( instance, ID ) {
             var l=instance.I.length;
             for( var i=0; i<l; i++ ) {
@@ -299,7 +290,7 @@ TODO:
             }
             return null;
           };
-            
+
           NGY2Item.GetIdx = function( instance, ID ) {
             var l=instance.I.length;
             for( var i=0; i<l; i++ ) {
@@ -309,10 +300,14 @@ TODO:
             }
             return -1;
           };
-          
+
           // create new item (image, album or albumUp)
           NGY2Item.New = function( instance, title, description, ID, albumID, kind, tags ) {
             var album=NGY2Item.Get( instance, albumID );
+// console.log('---');
+// console.dir(album);
+// console.dir(instance.I);
+
             if( albumID != -1 && albumID != 0 && title !='image gallery by nanogallery2 [build]'  ) {
               if( instance.O.thumbnailLevelUp && album.getContentLength(false) == 0) {
                 // add navigation thumbnail (album up)
@@ -328,7 +323,7 @@ TODO:
                 jQuery.extend( true, item.thumbs.height, instance.tn.defaultSize.height);
               }
             }
-            
+
             var item=NGY2Item.Get(instance, ID);
             if( item === null ){
               // create a new item (otherwise, just update the existing one)
@@ -365,17 +360,18 @@ TODO:
                 description=description.substring(0, p) + description.substring(p+kw.length, description.length);
               }
             }
-            
-            // TAGS 
-            if( instance.galleryFilterTags.Get() != false ) {
-              if( instance.galleryFilterTags.Get() == true ) {
-                if( tags != '' && tags != undefined ) {
+
+            // TAGS
+            // if( instance.galleryFilterTags.Get() != false ) {
+              // if( instance.galleryFilterTags.Get() == true ) {
+                // if( tags != '' && tags != undefined ) {
                   // use set tags
-                  item.setTags(tags.split(' '));
-                }
-              }
-              else {
+                  // item.setTags(tags.split(' '));
+                // }
+              // }
+              // else {
                 // extract tags starting with # (in title)
+              if( typeof  instance.galleryFilterTags.Get() == 'string' ) {
                 switch( instance.galleryFilterTags.Get().toUpperCase() ) {
                   case 'TITLE':
                     var re = /(?:^|\W)#(\w+)(?!\w)/g, match, matches = [];
@@ -397,14 +393,21 @@ TODO:
                     break;
                 }
               }
-            }
-            
+                else {
+                  if( tags != '' && tags != undefined ) {
+                    // use set tags
+                    item.setTags(tags.split(' '));
+                  }
+                }
+              // }
+            // }
+
             // set (maybe modified) fields title and description
             item.title=escapeHtml(instance, title);
             item.description=escapeHtml(instance, description);
             return item;
           };
-          
+
           // function to avoid XSS issue - Cross Site Scripting
           // original: https://github.com/janl/mustache.js/blob/master/mustache.js#L55
           var entityMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '/': '&#x2F;', '`': '&#x60;', '=': '&#x3D;' };
@@ -418,8 +421,8 @@ TODO:
               });
             }
           }
-          
-          
+
+
           NGY2Item.get_nextId = function () {
             return nextId;
           };
@@ -454,7 +457,7 @@ TODO:
             this.width = w;
             this.height = h;
           };
-          
+
           //--- set one thumbnail (url and size) - screenSize and level are optionnal
           NGY2Item.prototype.thumbSet = function( src, w, h, screenSize, level ) {
             var lst=['xs','sm','me','la','xl'];
@@ -490,7 +493,7 @@ TODO:
                 this.thumbs.width[level][screenSize]=w;
               }
             }
-          
+
             var lst=['xs','sm','me','la','xl'];
             for( var i=0; i< lst.length; i++ ) {
               this.thumbs.height.l1[lst[i]]=h;
@@ -503,7 +506,7 @@ TODO:
           };
 
           //--- set thumbnail image real height for current level/resolution, and for all others level/resolutions having the same settings
-          NGY2Item.prototype.thumbSetImgHeight = function( h ) {              
+          NGY2Item.prototype.thumbSetImgHeight = function( h ) {
             var lst=['xs','sm','me','la','xl'];
             for( var i=0; i< lst.length; i++ ) {
               if( this.G.tn.settings.height.l1[lst[i]] == this.G.tn.settings.getH() && this.G.tn.settings.width.l1[lst[i]] == this.G.tn.settings.getW() ) {
@@ -518,7 +521,7 @@ TODO:
           };
 
           //--- set thumbnail image real width for current level/resolution, and for all others level/resolutions having the same settings
-          NGY2Item.prototype.thumbSetImgWidth = function( w ) {              
+          NGY2Item.prototype.thumbSetImgWidth = function( w ) {
             var lst=['xs','sm','me','la','xl'];
             for( var i=0; i< lst.length; i++ ) {
               if( this.G.tn.settings.height.l1[lst[i]] == this.G.tn.settings.getH() && this.G.tn.settings.width.l1[lst[i]] == this.G.tn.settings.getW() ) {
@@ -531,9 +534,9 @@ TODO:
               }
             }
           };
-        
+
           //--- Returns Thumbnail image (depending of the screen resolution)
-          NGY2Item.prototype.thumbImg = function () {   
+          NGY2Item.prototype.thumbImg = function () {
             var tnImg = { src:'', width:0, height:0 };
 
             if( this.title == 'image gallery by nanogallery2 [build]' ) {
@@ -546,9 +549,9 @@ TODO:
             tnImg.height=this.thumbs.height[this.G.GOM.curNavLevel][this.G.GOM.curWidth];
             return tnImg;
           };
-          
+
           //--- Set tags to items and add these tags to the album
-          NGY2Item.prototype.setTags = function( tags ) {              
+          NGY2Item.prototype.setTags = function( tags ) {
           if( tags.length > 0 ) {
               this.tags=tags;
               var lstTags=this.album().albumTagList;
@@ -566,7 +569,7 @@ TODO:
               }
             }
           };
-          
+
           //--- check if 1 of current item's tags is selected (tag filter)
           NGY2Item.prototype.checkTagFilter = function() {
             if( this.G.galleryFilterTags.Get() != false && this.album().albumTagList.length > 0 ) {
@@ -588,7 +591,28 @@ TODO:
             else
               return true;
           };
-          
+
+          //--- check if 1 of current item's tags is found using API search
+          NGY2Item.prototype.isSearchTagFound = function() {
+            if( this.G.GOM.albumSearchTags == '' ) { return true; }
+            if( this.G.O.thumbnailLevelUp && this.kind=='albumUp' ) { return true; }
+
+            //var lstTags=this.album().albumTagListSel;
+            for( var i=0; i<this.tags.length; i++ ) {
+              if( this.tags[i].toUpperCase().indexOf( this.G.GOM.albumSearchTags ) >= 0 ) {
+                return true;
+              }
+            }
+            return false;
+          };
+
+          //--- check if current item can be displayed
+          NGY2Item.prototype.isToDisplay = function( albumID ) {
+            return this.albumID == albumID && this.checkTagFilter() && this.isSearchFound() && this.isSearchTagFound();
+          };
+
+
+
           //--- returns the number of items of the current album
           //--- count using tags filter
           NGY2Item.prototype.getContentLength = function( filterTags ) {
@@ -601,14 +625,14 @@ TODO:
               var albumID=this.GetID();
               for( var idx=0; idx<l; idx++ ) {
                 var item=this.G.I[idx];
-                if( item.albumID == albumID && item.checkTagFilter() && item.isSearchFound() ) {
+                if( item.isToDisplay(albumID) ) {
                   cnt++;
                 }
               }
               return cnt;
             }
           };
-          
+
           NGY2Item.prototype.isSearchFound = function() {
             if( this.G.GOM.albumSearch != '' ) {
               if( this.title.toUpperCase().indexOf( this.G.GOM.albumSearch ) == -1 ) {
@@ -617,8 +641,8 @@ TODO:
             }
             return true;
           }
-          
-          
+
+
           //--- for future use...
           NGY2Item.prototype.responsiveURL = function () {
             var url = '';
@@ -638,8 +662,31 @@ TODO:
             }
             return url;
           };
-          
-          
+
+
+          //--- Reveal the thumbnail image with animation on opacity
+          NGY2Item.prototype.ThumbnailImageReveal = function () {
+
+            if( this.thumbnailImgRevealed == false ) {
+              this.thumbnailImgRevealed=true;
+              var tweenable = new NGTweenable();
+              tweenable.tween({
+                from:         { opacity: 0 },
+                to:           { opacity: 1 },
+                attachment:   { item: this },
+                delay:        0,
+                duration:     600,
+                easing:       'easeOutQuart',
+                step:         function (state, att) {
+                  if( att.item.$getElt('.nGY2TnImg') != null ) {
+                    att.item.$getElt('.nGY2TnImg').css('opacity', state.opacity);
+                  }
+                }
+              });
+            }
+          };
+
+
           // In case of thumbnails with stacks - apply a percent to a value which include a unit
           function ValueApplyPercent( str, percent ) {
             str=String(str);
@@ -650,15 +697,15 @@ TODO:
             if( ar != null && ar.length > 0 ) {
               a=ar.join();
             }
-             
+
             if( isNaN(n) || n == 0 ) {
               return str;
             }
 
             n=n*percent;
             return n+a;
-          } 
-          
+          }
+
           //--- 2D/3D css transform - apply the cached value to element
           NGY2Item.prototype.CSSTransformApply = function ( eltClass ) {
             var obj=this.eltTransform[eltClass];
@@ -683,7 +730,7 @@ TODO:
                   v += ' rotate('+ValueApplyPercent(obj.rotateZ,pRotateZ)+')';
                 }
                 obj.$elt[n].style[this.G.CSStransformName]= v;
-                
+
                 if( nbStacks > 0 ) {
                   // apply a percent to the stack elements
                   pTranslateX-=this.G.tn.opt.Get('stacksTranslateX');
@@ -725,9 +772,13 @@ TODO:
           NGY2Item.prototype.CSSFilterApply = function ( eltClass ) {
             var obj=this.eltFilter[eltClass];
             var v = 'blur('+obj.blur+') brightness('+obj.brightness+') grayscale('+obj.grayscale+') sepia('+obj.sepia+') contrast('+obj.contrast+') opacity('+obj.opacity+') saturate('+obj.saturate+')';
-            if( obj.$elt != null && obj.$elt[0] != undefined ) {
-              obj.$elt[0].style.WebkitFilter= v;
-              obj.$elt[0].style.filter= v;
+            if( obj.$elt != null ) {
+              for( var n=0; n<obj.$elt.length; n++ ) {
+                if( obj.$elt[n] != undefined ) {
+                  obj.$elt[n].style.WebkitFilter= v;
+                  obj.$elt[n].style.filter= v;
+                }
+              }
             }
           };
 
@@ -752,7 +803,7 @@ TODO:
             context.cssKind='';
             if( hoverIn ) {
               // HOVER IN
-              
+
               if( this.eltEffect[effect.element] == undefined ) {
                 this.eltEffect[effect.element]=[];
               }
@@ -763,7 +814,7 @@ TODO:
                 // store initial and current value -> for use in the back animation
                 this.eltEffect[effect.element][effect.type]= { initialValue: effect.from, lastValue: effect.from};
               }
-              
+
               context.animeFrom=effect.from;
               context.animeTo=effect.to;
               context.animeDuration=parseInt(effect.duration);
@@ -782,9 +833,9 @@ TODO:
                 context.animeFrom=this.eltEffect[effect.element][effect.type].lastValue;
                 context.animeTo=this.eltEffect[effect.element][effect.type].initialValue;
                 // context.animeTo=effect.to;
-                
+
               }
-              
+
               context.animeDuration=parseInt(effect.durationBack);
               context.animeDelay=30+parseInt(effect.delayBack+delay);   // 30ms is a default delay to avoid conflict with other initializations
               context.animeEasing=effect.easingBack;
@@ -825,7 +876,7 @@ TODO:
               duration:     context.animeDuration,    //parseInt(effect.duration),
               delay:        context.animeDelay,       //parseInt(effect.delay),
               easing:       context.animeEasing,      //'easeOutQuart',
-              
+
               step: function (state, att) {
                 if( att.item.$getElt() == null ) {
                   // the thumbnail may be destroyed since the start of the animation
@@ -845,10 +896,10 @@ TODO:
                   // att.tweenable.dispose();
                   return;
                 }
-                
+
                 // test if in delay phase
                 if( state.v == att.animeFrom ) { return; }
-                
+
                 switch( att.cssKind ) {
                   case 'transform':
                     att.item.CSSTransformSet(att.effect.element, att.effect.type, state.v);
@@ -872,7 +923,7 @@ TODO:
                   att.item.eltEffect[att.effect.element][att.effect.type].lastValue= state.v;
                 }
               },
-              
+
               finish: function (state, att) {
                 if( hoverIn ) {
                   // store value for back animation
@@ -908,7 +959,7 @@ TODO:
               }
             });
           };
-          
+
           // set z-index to display element on top of all others
           function setElementOnTop( start, elt ) {
             var highest_index = 0;
@@ -920,14 +971,14 @@ TODO:
             highest_index++;
             jQuery(elt).css('z-index',highest_index);
           }
-          
+
 
           return NGY2Item;
-        })();    
-          
+        })();
+
       }
 
-    
+
       _this.options = jQuery.extend(true, {}, jQuery.nanogallery2.defaultOptions, options);
       // Initialization code
       _this.nG2=null;
@@ -935,7 +986,7 @@ TODO:
       _this.nG2.initiateGallery2(_this.e, _this.options );
 
     };
-      
+
     // PUBLIC EXPOSED METHODS
     _this.test = function() {
       //alert('test');
@@ -944,11 +995,11 @@ TODO:
       //privateTest();
     }
 
-    
+
     // Run initializer
     _this.init();
   };
- 
+
   jQuery.nanogallery2.defaultOptions = {
     kind :                        '',
     userID :                      '',
@@ -971,8 +1022,8 @@ TODO:
     items :                       null,
     itemsBaseURL :                '',
     thumbnailSelectable :         false,
-    jsonCharset:                  'Latin',
-    jsonProvider:                 '',
+    dataProvider:                 '',
+    dataCharset:                  'Latin',
     allowHTMLinData:              false,
     locationHash :                true,
     slideshowDelay :              3000,
@@ -993,20 +1044,30 @@ TODO:
     paginationSwipeSensibilityVert : 10,
     galleryFilterTags :           false,    // possible values: false, true, 'title', 'description'
     galleryL1FilterTags :         null,     // possible values: false, true, 'title', 'description'
-    galleryMaxItems :             0,        // maximum number of items per album  --> only flickr, google+, nanophotosprovider
-    galleryL1MaxItems :           null,     // maximum number of items per gallery page --> only flickr, google+, nanophotosprovider
+    galleryMaxItems :             0,        // maximum number of items per album  --> only flickr, google+, nano_photos_provider2
+    galleryL1MaxItems :           null,     // maximum number of items per gallery page --> only flickr, google+, nano_photos_provider2
     gallerySorting :              '',
     galleryL1Sorting :            null,
+    galleryDisplayTransition :    'none',
+    galleryL1DisplayTransition :  null,
+    galleryDisplayTransitionDuration :    1000,
+    galleryL1DisplayTransitionDuration :  null,
     galleryResizeAnimation :      true,
+    galleryRenderDelay :          60,
 
     thumbnailCrop :               true,
+    thumbnailL1Crop :             null,
     thumbnailCropScaleFactor :    1.5,
     thumbnailLevelUp :            false,
     thumbnailAlignment :          'center',
     thumbnailWidth :              300,
+    thumbnailL1Width :            null,
     thumbnailHeight :             200,
+    thumbnailL1Height :           null,
     thumbnailGutterWidth :        2,
+    thumbnailL1GutterWidth :      null,
     thumbnailGutterHeight :       2,
+    thumbnailL1GutterHeight :     null,
     thumbnailBorderVertical :     2,
     thumbnailBorderHorizontal :   2,
     thumbnailFeaturedKeyword :    '*featured',
@@ -1014,17 +1075,26 @@ TODO:
     thumbnailHoverEffect2 :       'toolsAppear',
     thumbnailBuildInit2 :         '',
     thumbnailStacks :             0,
+    thumbnailL1Stacks :           null,
     thumbnailStacksTranslateX :   0,
+    thumbnailL1StacksTranslateX : null,
     thumbnailStacksTranslateY :   0,
+    thumbnailL1StacksTranslateY : null,
     thumbnailStacksTranslateZ :   0,
+    thumbnailL1StacksTranslateZ : null,
     thumbnailStacksRotateX :      0,
+    thumbnailL1StacksRotateX :    null,
     thumbnailStacksRotateY :      0,
+    thumbnailL1StacksRotateY :    null,
     thumbnailStacksRotateZ :      0,
+    thumbnailL1StacksRotateZ :    null,
     thumbnailStacksScale :        0,
+    thumbnailL1StacksScale :      null,
     thumbnailDisplayOutsideScreen: false,
+    thumbnailWaitImageLoaded:     true,
     galleryBuildInit2 :           '',
     portable :                    false,
-    
+
     touchAnimation :              true,
     touchAutoOpenDelay :          0,
 
@@ -1044,19 +1114,23 @@ TODO:
     thumbnailToolbarImage :       { topLeft: 'select', topRight : 'featured' },
     thumbnailToolbarAlbum :       { topLeft: 'select', topRight : 'counter' },
     thumbnailDisplayInterval :    15,
+    thumbnailL1DisplayInterval :  null,
     thumbnailDisplayTransition :  'fadeIn',
-    thumbnailDisplayTransitionDuration: 240,
+    thumbnailL1DisplayTransition : null,
+    thumbnailDisplayTransitionDuration:   240,
+    thumbnailL1DisplayTransitionDuration: null,
     thumbnailOpenImage :          true,
     thumbnailOpenOriginal :       false,
     thumbnailGlobalImageTitle :   '',
     thumbnailGlobalAlbumTitle :   '',
-    
+
     viewer :                      'internal',
     viewerFullscreen:             false,
     viewerDisplayLogo :           false,
     imageTransition :             'swipe',
     viewerZoom :                  true,
     openOnStart :                 '',
+    viewerHideToolsDelay :        3000,
     viewerToolbar : {
       display :                   true,
       position :                  'bottomOverImage',
@@ -1064,18 +1138,18 @@ TODO:
       align :                     'center',
       autoMinimize :              0,
       standard :                  'minimizeButton,label',
-      minimized :                 'minimizeButton,label,infoButton,downloadButton,linkOriginalButton,fullscreenButton'
+      minimized :                 'minimizeButton,label,infoButton,shareButton,downloadButton,linkOriginalButton,fullscreenButton'
     },
     viewerTools : {
       topLeft :                   'pageCounter,playPauseButton',
-      topRight :                  'zoomButton,shareButton,closeButton' 
+      topRight :                  'zoomButton,closeButton'
     },
-    
+
     breakpointSizeSM :            480,
     breakpointSizeME :            992,
     breakpointSizeLA :            1200,
     breakpointSizeXL :            1800,
-    
+
     fnThumbnailInit :             null,
     fnThumbnailHoverInit :        null,
     fnThumbnailHover :            null,
@@ -1091,7 +1165,11 @@ TODO:
     fnGalleryRenderEnd :          null,
     fnGalleryObjectModelBuilt :   null,
     fnGalleryLayoutApplied :      null,
-    
+    fnThumbnailClicked :          null,
+    fnShoppingCartUpdated :       null,
+    fnThumbnailToolCustAction :   null,
+    fnThumbnailOpen :             null,
+    fnImgDisplayed :              null,
 
     i18n : {
       'breadcrumbHome' : 'Galleries', 'breadcrumbHome_FR' : 'Galeries',
@@ -1108,7 +1186,7 @@ TODO:
       breadcrumbSeparator:          '<i class="nGY2Icon icon-left-open"></i>',
       breadcrumbSeparatorRtl:       '<i class="nGY2Icon icon-right-open"></i>',
       navigationFilterSelected:     '<i style="color:#fff;" class="nGY2Icon icon-toggle-on"></i>',
-      navigationFilterUnselected:   '<i style="color:#aaa;" class="nGY2Icon icon-toggle-off"></i>',
+      navigationFilterUnselected:   '<i style="color:#ddd;" class="nGY2Icon icon-toggle-off"></i>',
       navigationFilterSelectedAll:  '<i class="nGY2Icon icon-toggle-on"></i><i class="nGY2Icon icon-ok"></i>',
       thumbnailSelected:            '<i style="color:#bff;" class="nGY2Icon icon-ok-circled"></i>',
       thumbnailUnselected:          '<i style="color:#bff;" class="nGY2Icon icon-circle-empty"></i>',
@@ -1174,13 +1252,13 @@ TODO:
   };
 
   jQuery.fn.nanogallery2 = function (args, option, value) {
-    
+
     if( typeof jQuery(this).data('nanogallery2data') === 'undefined'){
       if( args == 'destroy' ) {
         // command to destroy but no instance yet --> exit
         return;
       }
-      
+
       return this.each( function(){
         (new jQuery.nanogallery2(this, args));
       });
@@ -1191,8 +1269,17 @@ TODO:
 
       var nG2=$(this).data('nanogallery2data').nG2;
       switch(args){
+        case 'displayItem':
+          nG2.DisplayItem(option);
+          break;
         case 'search':
-          nG2.Search(option);
+          return( nG2.Search(option));
+          break;
+        case 'search2':
+          return nG2.Search2(option, value);
+          break;
+        case 'search2Execute':
+          return nG2.Search2Execute();
           break;
         case 'refresh':
           nG2.Refresh();
@@ -1247,8 +1334,14 @@ TODO:
               nG2.shoppingCart[i].cnt=cnt;
             }
           }
-          if(typeof nG2.O.fnShoppingCartUpdated === 'function'){
-            nG2.O.fnShoppingCartUpdated(nG2.shoppingCart);
+          if( G.O.fnShoppingCartUpdated !== null ) {
+            if( typeof G.O.fnShoppingCartUpdated == 'function' ) {
+              G.O.fnShoppingCartUpdated(nG2.shoppingCart);
+            }
+            else {
+              // defined in markup
+              window[G.O.fnShoppingCartUpdated](nG2.shoppingCart);
+            }
           }
           return nG2.shoppingCart;
           break;
@@ -1263,8 +1356,14 @@ TODO:
               break;
             }
           }
-          if(typeof nG2.O.fn   === 'function'){
-            nG2.O.fnShoppingCartUpdated(nG2.shoppingCart);
+          if( G.O.fnShoppingCartUpdated !== null ) {
+            if( typeof G.O.fnShoppingCartUpdated == 'function' ) {
+              G.O.fnShoppingCartUpdated(nG2.shoppingCart);
+            }
+            else {
+              // defined in markup
+              window[G.O.fnShoppingCartUpdated](nG2.shoppingCart);
+            }
           }
           return nG2.shoppingCart;
           break;
@@ -1273,7 +1372,7 @@ TODO:
 
     }
   };
-  
+
 
   // ###############################
   // ##### nanogallery2 script #####
@@ -1295,7 +1394,7 @@ TODO:
       if( albumIdx == -1 ) {
         throw ('Current album not found.');
       }
-      
+
       var albumID=G.I[albumIdx].GetID();
 
       // unselect everything & remove link to album (=logical delete)
@@ -1306,12 +1405,12 @@ TODO:
           item.selected = false;
         }
       }
-      
+
       G.I[albumIdx].contentIsLoaded = false;
-      
+
       DisplayAlbum('-1', albumID);
     };
-    
+
     /**
      * Set one or several items selected/unselected
      * @param {array} items
@@ -1322,7 +1421,7 @@ TODO:
         ThumbnailSelectionSet(items[j], value);
       }
     };
-    
+
     /**
      * Returns an array of selected items
      * @returns {Array}
@@ -1336,8 +1435,8 @@ TODO:
         }
       }
       return selectedItems;
-    };    
-    
+    };
+
     /**
      * Returns the value of an option
      * @param {string} option
@@ -1361,7 +1460,7 @@ TODO:
             break;
         }
     };
-    
+
     /**
      * refresh the current gallery
      */
@@ -1369,15 +1468,77 @@ TODO:
       // refresh the displayed gallery
       GalleryRender( G.GOM.albumIdx );
     };
-    
+
+    /**
+     * display one item (image or gallery)
+     *   itemID syntax:
+     *    - albumID --> display one album
+     *    - albumID/imageID --> display one image
+    */
+    this.DisplayItem = function( itemID ) {
+      var IDs=parseIDs( itemID );
+      if( IDs.imageID != '0' ) {
+        DisplayPhoto( IDs.imageID, IDs.albumID );
+      }
+      else {
+        DisplayAlbum( '-1', IDs.albumID );
+      }
+    };
+
+
+
+    var CountItemsToDisplay = function( gIdx ) {
+      if( G.I[gIdx] == undefined ) { return 0; }
+      var albumID=G.I[gIdx].GetID();
+      var l=G.I.length;
+      var cnt=0;
+      for( var idx=0; idx < l; idx++ ) {
+        var item=G.I[idx];
+        if( item.isToDisplay(albumID) ) {
+          cnt++;
+        }
+      }
+      return cnt;
+    }
     /**
      * Search in the displayed gallery (in thumbnails title)
      */
-    this.Search = function( search) {
+    this.Search = function( search ) {
       G.GOM.albumSearch=search.toUpperCase();
+      var gIdx=G.GOM.albumIdx;
       GalleryRender( G.GOM.albumIdx );
+      return CountItemsToDisplay(gIdx);
     };
-    
+
+    /**
+     * Search2 in title and tags - set search values
+     */
+    this.Search2 = function( searchTitle, searchTags ) {
+      if( searchTitle != null && searchTitle != undefined ) {
+        G.GOM.albumSearch=searchTitle.toUpperCase();
+      }
+      else {
+        G.GOM.albumSearch='';
+      }
+
+      if( searchTags != null && searchTags != undefined ) {
+        G.GOM.albumSearchTags=searchTags.toUpperCase();
+      }
+      else {
+        G.GOM.albumSearchTags='';
+      }
+      return CountItemsToDisplay(G.GOM.albumIdx);
+    };
+    /**
+     * Search2 - execute the search on title and tags
+     */
+    this.Search2Execute = function() {
+      var gIdx=G.GOM.albumIdx;
+      GalleryRender( G.GOM.albumIdx );
+      return CountItemsToDisplay(gIdx);
+    };
+
+
     /**
      * Destroy the current gallery
      */
@@ -1396,11 +1557,11 @@ TODO:
         G.VOM.hammertime.destroy();
         G.VOM.hammertime=null;
       }
-      //ThumbnailHoverReInitAll();  
-      
+      //ThumbnailHoverReInitAll();
+
       // color scheme
       $('#ngycs_'+G.baseEltID).remove()
-      
+
       G.GOM.items=[];
       G.GOM.navigationBar.$newContent=null;
       G.$E.base.empty();
@@ -1408,17 +1569,18 @@ TODO:
 
       jQuery(window).off('resize.nanogallery2.'+G.baseEltID);
       jQuery(window).off('scroll.nanogallery2.'+G.baseEltID);
-      
-      
+      G.GOM.firstDisplay=false;
+
+
     };
-    
-    
-    
+
+
+
     // throttle()
     // author: underscore.js - http://underscorejs.org/docs/underscore.html
     // Returns a function, that, when invoked, will only be triggered at most once during a given window of time.
     // Normally, the throttled function will run as much as it can, without ever going more than once per wait duration;
-    // but if youd like to disable the execution on the leading edge, pass {leading: false}.
+    // but if you�d like to disable the execution on the leading edge, pass {leading: false}.
     // To disable execution on the trailing edge, ditto.
     var throttle = function(func, wait, options) {
       var context, args, result;
@@ -1450,17 +1612,40 @@ TODO:
         }
         return result;
       };
-    };    
+    };
+
+
+    // DEBOUNCE
+    // author: John Hann - http://unscriptable.com/2009/03/20/debouncing-javascript-methods/
+    // execAsap - false means executing at the end of the detection period
+    var debounce = function (func, threshold, execAsap) {
+      var timeout;
+      return function debounced () {
+          var obj = this, args = arguments;
+          function delayed () {
+              if (!execAsap)
+                  func.apply(obj, args);
+              timeout = null;
+          };
+
+          if (timeout)
+              clearTimeout(timeout);
+          else if (execAsap)
+              func.apply(obj, args);
+          timeout = setTimeout(delayed, threshold || 100);
+      };
+    }
+
 
     /*
-    ** Global data for this nanoGALLERY instance
+    ** Global data for this nanogallery2 instance
     **/
     var G=this;
     G.I =                       [];           // gallery items
     G.Id =                      [];           // gallery items
     G.O =                       null;         // user options
     G.baseEltID =               null;         // ID of the base element
-    G.$E = { 
+    G.$E = {
       base:                     null,         // base element
       conTnParent:              null,         // $g_containerThumbnailsParent
       conLoadingB:              null,         // loading bar - nanoGalleryLBarOff
@@ -1488,7 +1673,7 @@ TODO:
             G.layout.prerequisite.imageSize=true;
             return;
           }
-          
+
           G.layout.engine='GRID';
           G.layout.support.rows=true;
           if( G.tn.opt.Get('crop') === true ) {
@@ -1531,8 +1716,18 @@ TODO:
         return G.gallerySorting[G.GOM.curNavLevel];
       }
     };
-    G.$currentTouchedThumbnail = null;    
-    
+    G.galleryDisplayTransition = { l1: 'none', lN: 'none',
+      Get: function() {
+        return G.galleryDisplayTransition[G.GOM.curNavLevel];
+      }
+    };
+    G.galleryDisplayTransitionDuration = { l1: 500, lN: 500,
+      Get: function() {
+        return G.galleryDisplayTransitionDuration[G.GOM.curNavLevel];
+      }
+    };
+    G.$currentTouchedThumbnail = null;
+
     // ##### GENERAL THUMBNAILS PROPERTIES -->
     G.tn = {
       // levell specific options
@@ -1547,7 +1742,7 @@ TODO:
       borderWidth:                    0,         // thumbnail container border width
       borderHeight:                   0,         // thumbnail container border height
       labelHeight: {                  // in case label on bottom, otherwise always=0
-        l1:0, lN:0,
+        l1: 0, lN: 0,
         get: function() {
           return G.tn.labelHeight[G.GOM.curNavLevel];
         }
@@ -1572,7 +1767,7 @@ TODO:
       settings: {                     // user defined width/height of the image to display depending on the screen size
         width: {  l1 : { xs:0, sm:0, me:0, la:0, xl:0, xsc:'u', smc:'u', mec:'u', lac:'u', xlc:'u' },
                   lN : { xs:0, sm:0, me:0, la:0, xl:0, xsc:'u', smc:'u', mec:'u', lac:'u', xlc:'u' } },
-        height: { l1 : { xs:0, sm:0, me:0, la:0, xl:0, xsc:'u', smc:'u', mec:'u', lac:'u', xlc:'u' }, 
+        height: { l1 : { xs:0, sm:0, me:0, la:0, xl:0, xsc:'u', smc:'u', mec:'u', lac:'u', xlc:'u' },
                   lN : { xs:0, sm:0, me:0, la:0, xl:0, xsc:'u', smc:'u', mec:'u', lac:'u', xlc:'u' } },
         getH: function() {
           return G.tn.settings.height[G.GOM.curNavLevel][G.GOM.curWidth];
@@ -1649,8 +1844,7 @@ TODO:
     G.CSStransitionName =         FirstSupportedPropertyName(["transition", "msTransition", "MozTransition", "WebkitTransition", "OTransition"]);
     G.CSSanimationName =          FirstSupportedPropertyName(["animation", "msAnimation", "MozAnimation", "WebkitAnimation", "OAnimation"]);
     G.GalleryResizeThrottled =    throttle(GalleryResize, 100, {leading: false});
-    
-    
+
     G.blackList =                 null;     // album white list
     G.whiteList =                 null;     // album black list
     G.albumList =                 [];       // album list
@@ -1658,16 +1852,15 @@ TODO:
     G.locationHashLastUsed =      '';
     G.custGlobals =               {};
     G.touchAutoOpenDelayTimerID = 0;
-    G.supportFullscreenAPI =      false;
     G.i18nLang =                  '';
     G.timeLastTouchStart =        0;
     G.custGlobals =               {};
-    
+
     //------------------------
     //--- Gallery Object Model
     G.GOM = {
       albumIdx :                  -1, // index (in G.I) of the currently displayed album
-      clipArea :                  { top:0, height: 0 }, // area of the GOM to display on screen
+      clipArea :                  { top: 0, height: 0 }, // area of the GOM to display on screen
       displayArea :               { width: 0 , height: 0 }, // size of the GOM area
       displayAreaLast :           { width: 0 , height: 0 }, // previous size of the GOM area
       displayedMoreSteps :        0, // current number of displayed steps (moreButton mode)
@@ -1690,11 +1883,12 @@ TODO:
       hammertime:                 null,
       curNavLevel:                'l1',   // current navigation level (l1 or LN)
       curWidth:                   'me',
-      albumSearch:                '',     // current search string (used to filter the thumbnails on screen)
+      albumSearch:                '',     // current search string -> title (used to filter the thumbnails on screen)
+      albumSearchTags:            '',     // current search string -> tags
       lastZIndex:                 0,      // used to put a thumbnail on top of all others (for exemple for scale hover effect)
       lastRandomValue:            0
     };
-    
+
     // One GOM item (thumbnail)
     function GTn(index, width, height) {
       this.thumbnailIdx = index;
@@ -1711,17 +1905,19 @@ TODO:
       this.neverDisplayed =       true;
       this.inDisplayArea =        false;
     }
-    
+
     //------------------------
     //--- Viewer Object Model
     G.VOM = {
       viewerDisplayed:            false,  // is the viewer currently displayed
       viewerIsFullscreen:         false,  // viewer in fullscreen mode
       infoDisplayed:              false,  // is the info box displayed
+      toolbarsDisplayed:          true,   // the toolbars are displayed
+      toolsHide:                  null,
       currentZoom:                1,
       isZooming:                  false,
-      padding:                    { H:0, V:0 }, // padding for the image
-      window:                     { lastWidth:0, lastHeight:0 },
+      padding:                    { H: 0, V: 0 }, // padding for the image
+      window:                     { lastWidth: 0, lastHeight: 0 },
       $cont:                      null,   // viewer container
       $viewer:                    null,
       $toolbar:                   null,   // viewerToolbar
@@ -1742,27 +1938,100 @@ TODO:
       Item: function(idx) {
         return G.I[this.items[idx].imageIdx];
       },
-      userEvents:                 null,   // user events management
-      hammertime:                 null,
-      swipePosX:                  0,
-      panPosX:                    0,      // manual pan position
-      panPosY:                    0,
-      zoomPosX:                   0,      // position to center zoom in/out
-      zoomPosY:                   0,
-      colorSchemeLabel:           '',
-      timeImgChanged:             0
+      IdxNext: function(idx) {
+        var n=0;
+        if( idx != G.VOM.items.length-1 ) {
+          n=idx+1;
+        }
+        return n;
+      },
+      IdxPrevious: function(idx) {
+        var n=idx-1;
+        if( idx == 0 ) {
+          n=G.VOM.items.length-1;
+        }
+        return n;
+      },
+      ItemNext: function(idx) {
+        return G.I[this.items[this.IdxNext(idx)].imageIdx]
+      },
+      ItemPrevious: function(idx) {
+        return G.I[this.items[this.IdxPrevious(idx)].imageIdx]
+      },
+      userEvents:         null,   // user events management
+      hammertime:         null,   // hammer.js manager
+      swipePosX:          0,      // current horizontal swip position
+      panPosX:            0,      // manual pan position
+      panPosY:            0,
+      zoomPosX:           0,      // position to center zoom in/out
+      zoomPosY:           0,
+      colorSchemeLabel:   '',
+      timeImgChanged:     0,
+      ImageLoader: {
+        // inspired by ROB - http://stackoverflow.com/users/226507/rob
+        maxChecks:        1000,
+        list:             [],
+        intervalHandle :  null,
+
+        loadImage : function (callback, url, ngitem) {
+          var img = new Image ();
+          img.src = url;
+          if (img.width && img.height) {
+            callback (img.width, img.height, url, ngitem, 0);
+            }
+          else {
+            var obj = {image: img, url: url, ngitem: ngitem, callback: callback, checks: 1};
+            var i;
+            for (i=0; i < this.list.length; i++)    {
+              if (this.list[i] == null)
+                break;
+              }
+            this.list[i] = obj;
+            if (!this.intervalHandle)
+              this.intervalHandle = setInterval(this.interval, 60);
+            }
+          },
+
+        // called by setInterval
+        interval : function () {
+          var count = 0;
+          var list = G.VOM.ImageLoader.list, item;
+          for (var i=0; i<list.length; i++) {
+            item = list[i];
+            if (item != null) {
+              if (item.image.width && item.image.height) {
+                item.callback (item.image.width, item.image.height, item.url, item.ngitem, item.checks);
+                G.VOM.ImageLoader.list[i] = null;
+                }
+              else if (item.checks > G.VOM.ImageLoader.maxChecks) {
+                item.callback (0, 0, item.url, item.ngitem, item.checks);
+                G.VOM.ImageLoader.list[i] = null;
+                }
+              else {
+                count++;
+                item.checks++;
+                }
+              }
+            }
+          if (count == 0) {
+            G.VOM.ImageLoader.list = [];
+            clearInterval (G.VOM.ImageLoader.intervalHandle);
+            delete G.VOM.ImageLoader.intervalHandle;
+            }
+          }
+        }
     }
     // One VOM item (image)
     function VImg(index) {
       this.imageIdx = index;
       this.imageNumber = 0;
     }
-    
+
     //------------------------
     //--- popup
     G.popup = {
-      isDisplayed:  false,
-      $elt:         null,
+      isDisplayed:      false,
+      $elt:             null,
       close: function() {
         if( this.$elt != null ) {
           var tweenable = new NGTweenable();
@@ -1788,23 +2057,23 @@ TODO:
         }
       }
     }
-    
-    
+
+
     // Color schemes - Gallery
     G.colorScheme_dark = {
       navigationBar :         { background: 'none', borderTop: '', borderBottom: '', borderRight: '', borderLeft: '' },
-      navigationBreadcrumb :  { background: '#111', color: '#fff', colorHover: '#ccc', borderRadius: '6px' },
-      navigationFilter :      { color: '#ddd', background: '#111', colorSelected: '#fff', backgroundSelected: '#111', borderRadius: '6px' },
-      thumbnail :             { background: '#000', borderColor: '#000', labelOpacity : 1, labelBackground: 'rgba(34, 34, 34, 0)', titleColor: '#fff', titleBgColor: 'transparent', titleShadow: '', descriptionColor: '#ccc', descriptionBgColor: 'transparent', descriptionShadow: '', stackBackground: '#aaa' },
+      navigationBreadcrumb :  { background: '#111', color: '#fff', colorHover: '#ccc', borderRadius: '4px' },
+      navigationFilter :      { color: '#ddd', background: '#111', colorSelected: '#fff', backgroundSelected: '#111', borderRadius: '4px' },
+      thumbnail :             { background: '#444', borderColor: '#000', labelOpacity : 1, labelBackground: 'rgba(34, 34, 34, 0)', titleColor: '#fff', titleBgColor: 'transparent', titleShadow: '', descriptionColor: '#ccc', descriptionBgColor: 'transparent', descriptionShadow: '', stackBackground: '#aaa' },
       thumbnailIcon :         { padding: '5px', color: '#fff' },
       pagination :            { background: '#111', backgroundSelected: '#666', color: '#fff', borderRadius: '4px', shapeBorder: '3px solid #666', shapeColor: '#444', shapeSelectedColor: '#aaa'}
     };
 
     G.colorScheme_light = {
       navigationBar :         { background: 'none', borderTop: '', borderBottom: '', borderRight: '', borderLeft: '' },
-      navigationBreadcrumb :  { background: '#eee', color: '#000', colorHover: '#333', borderRadius: '6px' },
-      navigationFilter :      { background: '#eee', color: '#222', colorSelected: '#000', backgroundSelected: '#eee', borderRadius: '6px' },
-      thumbnail :             { background: '#000', borderColor: '#000', labelOpacity : 1, labelBackground: 'rgba(34, 34, 34, 0)', titleColor: '#fff', titleBgColor: 'transparent', titleShadow: '', descriptionColor: '#ccc', descriptionBgColor: 'transparent', descriptionShadow: '', stackBackground: '#888' },
+      navigationBreadcrumb :  { background: '#eee', color: '#000', colorHover: '#333', borderRadius: '4px' },
+      navigationFilter :      { background: '#eee', color: '#222', colorSelected: '#000', backgroundSelected: '#eee', borderRadius: '4px' },
+      thumbnail :             { background: '#444', borderColor: '#000', labelOpacity : 1, labelBackground: 'rgba(34, 34, 34, 0)', titleColor: '#fff', titleBgColor: 'transparent', titleShadow: '', descriptionColor: '#ccc', descriptionBgColor: 'transparent', descriptionShadow: '', stackBackground: '#888' },
       thumbnailIcon :         { padding: '5px', color: '#fff' },
       pagination :            { background: '#eee', backgroundSelected: '#aaa', color: '#000', borderRadius: '4px', shapeBorder: '3px solid #666', shapeColor: '#444', shapeSelectedColor: '#aaa'}
     };
@@ -1838,15 +2107,15 @@ TODO:
       barDescriptionColor:    '#aaa'
     };
 
-      
-    
+
+
     // shortcut with G context to NGY2TOOLS
     // var NanoAlert =           NGY2Tools.NanoAlert.bind(G);
     // var NanoConsoleLog =      NGY2Tools.NanoConsoleLog.bind(G);
     var NanoAlert =           NGY2Tools.NanoAlert;
     var NanoConsoleLog =      NGY2Tools.NanoConsoleLog;
 
-    
+
     /** @function initiateGallery2 */
     this.initiateGallery2 = function( element, params ) {
 
@@ -1861,12 +2130,11 @@ TODO:
         G.$E.base.attr('id', G.baseEltID)
       }
       G.O.$markup =       [];
-      
       DefineVariables();
       SetPolyFills();
       BuildSkeleton();
       SetGlobalEvents();
-      
+
       // check if only one specific album will be used
       var albumToDisplay=G.O.album;
       if( albumToDisplay == '' && G.O.photoset != '' ) {
@@ -1876,7 +2144,7 @@ TODO:
         G.O.displayBreadcrumb=false;    // no breadcrumb since only 1 album
         if( albumToDisplay.toUpperCase() != 'NONE' ) {
           // open specific album
-        
+
           var p=albumToDisplay.indexOf('&authkey=');
           if( p == -1 ) {
             p=albumToDisplay.indexOf('?authkey=');
@@ -1894,20 +2162,26 @@ TODO:
             DisplayAlbum('-1', albumID);
           }
           else {
+            if( G.O.kind == "nano_photos_provider2") {
+              if( albumToDisplay == decodeURIComponent(albumToDisplay)) {
+                // album ID must be encoded
+                albumToDisplay=encodeURIComponent(albumToDisplay);
+                G.O.album=albumToDisplay;
+              }
+            }
             var nItm=NGY2Item.New( G, '', '', albumToDisplay, '-1', 'album' );
             DisplayAlbum('-1', albumToDisplay);
           }
           return;
         }
       }
-      
+
       // use full content
-      
       // add base album
       var itm=NGY2Item.New( G, G.i18nTranslations.breadcrumbHome, '', '0', '-1', 'album' );
 
       processStartOptions();
-      
+
 
     }
 
@@ -1926,7 +2200,7 @@ TODO:
         jQuery.nanogallery2['data_'+G.O.kind](G, 'GetHiddenAlbums', G.albumListHidden, processStartOptionsPart2);
         return;
       }
-      
+
       if( !ProcessLocationHash() ) {
         processStartOptionsPart2();
       }
@@ -1934,7 +2208,7 @@ TODO:
 
     /** @function processStartOptionsPart2 */
     function processStartOptionsPart2() {
-  
+
       // Check location hash + start parameters -> determine what to do on start
       // openOnStart parameter
       if( G.O.openOnStart != '' ) {
@@ -1951,11 +2225,11 @@ TODO:
         DisplayAlbum('-1', 0);
       }
     }
-    
+
     // Parse string to extract albumID and imageID (format albumID/imageID)
     function parseIDs( IDs ) {
-      var r={ albumID:'0', imageID:'0' };
-      
+      var r={ albumID: '0', imageID: '0' };
+
       var t=IDs.split('/');
       if( t.length > 0 ) {
         r.albumID=t[0];
@@ -1965,7 +2239,7 @@ TODO:
       }
       return r;
     }
-    
+
 
     /** @function DisplayAlbum */
     function DisplayAlbum( imageID, albumID ) {
@@ -1974,7 +2248,7 @@ TODO:
       if( G.VOM.viewerDisplayed ) {
         CloseInternalViewer(null);
       }
-    
+
       // set current navigation level (l1 or lN)
       var albumIdx=NGY2Item.GetIdx(G, albumID);
       if( albumIdx == 0 ) {
@@ -1989,20 +2263,20 @@ TODO:
         NGY2Item.New( G, '', '', albumID, '0', 'album' );    // create empty album
         albumIdx=G.I.length-1;
       }
-    
+
       if( !G.I[albumIdx].contentIsLoaded ) {
         // get content of the album if not already loaded
         AlbumGetContent( albumID, DisplayAlbum, imageID, albumID );
         return;
       }
-    
+
       ThumbnailSelectionClear();
-    
+
       G.GOM.pagination.currentPage=0;
       SetLocationHash( albumID, '' );
-      
+
       GalleryRender( albumIdx );
-    
+
     }
 
 
@@ -2033,10 +2307,9 @@ TODO:
         default:
           break;
       }
-    
     }
-    
-    
+
+
     // add one album/folder to the breadcrumb
     function breadcrumbAdd( albumIdx ) {
 
@@ -2080,8 +2353,8 @@ TODO:
       });
     }
 
-    
-    
+
+
     // Manage the gallery toolbar (breadcrumb + tag filter)
     function GalleryNavigationBar( albumIdx ) {
 
@@ -2096,11 +2369,11 @@ TODO:
         if( albumIdx != 0 ) {
           var l=G.I.length,
           parentID=0;
-          
+
           lstItems.push(albumIdx);
           var curIdx=albumIdx;
           newLevel++;
-          
+
           while( G.I[curIdx].albumID != 0 && G.I[curIdx].albumID != -1) {
             for(var i=1; i < l; i++ ) {
               if( G.I[i].GetID() == G.I[curIdx].albumID ) {
@@ -2112,19 +2385,19 @@ TODO:
             }
           }
         }
-        
+
         // build breadcrumb
         if( !(G.O.breadcrumbAutoHideTopLevel && newLevel == 0) ) {
           BreadcrumbBuild( lstItems );
         }
       }
 
-      
+
       //-- manage tag filters
       if( G.galleryFilterTags.Get() != false ) {
         var nTags=G.I[albumIdx].albumTagList.length;
         if( nTags > 0 ) {
-          for(var i=0; i <nTags; i++ ) {
+          for(var i=0; i < nTags; i++ ) {
             var s=G.I[albumIdx].albumTagList[i];
             var ic=G.O.icons.navigationFilterUnselected;
             var tagClass='Unselected';
@@ -2164,11 +2437,11 @@ TODO:
       }
 
     }
-    
+
     function BreadcrumbBuild(lstItems) {
 
       jQuery('<div class="nGY2NavigationbarItem nGY2Breadcrumb"></div>').appendTo(G.GOM.navigationBar.$newContent);
-      
+
       if( G.O.breadcrumbOnlyCurrentLevel ) {
         // display only 1 separator and the current folder level
         if( lstItems.length == 0 ) {
@@ -2198,14 +2471,16 @@ TODO:
           }
         }
       }
-    
+
     }
-    
+
 
     // Display pagination
     function ManagePagination( albumIdx ) {
 
       G.$E.conTnBottom.children().remove();
+
+      if( G.GOM.items.length == 0 ) { return; }   // no thumbnail to display
 
       // calculate the number of pages
       var nbPages=Math.ceil((G.GOM.items[G.GOM.items.length-1].row+1)/G.galleryMaxRows.Get());
@@ -2217,11 +2492,11 @@ TODO:
       if( G.GOM.pagination.currentPage > (nbPages-1) ) {
         G.GOM.pagination.currentPage=nbPages-1;
       }
-      
+
       GalleryRenderGetInterval();
       // nothing to display --> exit
       if( G.GOM.displayInterval.len == 0 ) { return; }
-      
+
       // display "previous"
       if( G.O.galleryPaginationMode == 'NUMBERS' && G.GOM.pagination.currentPage > 0 ) {
         var $eltPrev=jQuery('<div class="nGY2PaginationPrev">'+G.O.icons.paginationPrevious+'</div>').appendTo(G.$E.conTnBottom);
@@ -2252,7 +2527,7 @@ TODO:
           else {
             nbBeforeAfter=numberOfPagesToDisplay/2;
           }
-          
+
           if( G.GOM.pagination.currentPage < nbBeforeAfter ) {
             firstPage=0;
             lastPage=numberOfPagesToDisplay-1;
@@ -2267,7 +2542,7 @@ TODO:
               lastPage=nbPages-1;
             }
           }
-          
+
           if( (lastPage - firstPage) < numberOfPagesToDisplay ) {
             firstPage=lastPage-numberOfPagesToDisplay;
             if( firstPage < 0 ) {
@@ -2319,13 +2594,13 @@ TODO:
 
     }
     function isOdd(num) { return (num % 2) == 1;}
-    
+
     // pagination - next page
     function paginationNextPage() {
       var aIdx=G.GOM.albumIdx,
       n1=0;
       ThumbnailHoverOutAll();
-      
+
       // pagination - max lines per page mode
       if( G.galleryMaxRows.Get() > 0 ) {
         // number of pages
@@ -2339,13 +2614,13 @@ TODO:
       else {
         pn=0;
       }
-      
+
       G.GOM.pagination.currentPage = pn;
       TriggerCustomEvent('pageChanged');
 
       GalleryDisplay( true );
     }
-    
+
     // pagination - previous page
     function paginationPreviousPage() {
       // var aIdx=G.$E.conTnBottom.data('galleryIdx'),
@@ -2353,14 +2628,14 @@ TODO:
       n1=0;
 
       ThumbnailHoverOutAll();
-      
+
       // pagination - max lines per page mode
       if( G.galleryMaxRows.Get() > 0 ) {
         // number of pages
         n1=(G.GOM.items[G.GOM.items.length-1].row+1)/G.galleryMaxRows.Get();
       }
       var n2=Math.ceil(n1);
-      
+
       // var pn=G.$E.conTnBottom.data('currentPageNumber');
       var pn=G.GOM.pagination.currentPage;
       if( pn > 0 ) {
@@ -2379,7 +2654,7 @@ TODO:
     function GalleryRenderGetInterval() {
       G.GOM.displayInterval.from=0;
       G.GOM.displayInterval.len=G.I.length;
-      
+
       switch( G.galleryDisplayMode.Get() ) {
         case 'PAGINATION':
           if( G.layout.support.rows ) {
@@ -2447,16 +2722,21 @@ TODO:
           break;
       }
     }
-    
-    
+
+
     // RENDER THE GALLERY
     function GalleryRender( albumIdx ) {
 
       TriggerCustomEvent('galleryRenderStart');
-      if( typeof G.O.fnGalleryRenderStart == 'function' ) {
-        G.O.fnGalleryRenderStart(albumIdx);
+      if( G.O.fnGalleryRenderStart !== null ) {
+        if( typeof G.O.fnGalleryRenderStart == 'function' ) {
+          G.O.fnGalleryRenderStart(albumIdx);
+        }
+        else {
+          // defined in markup
+          window[G.O.fnGalleryRenderStart](albumIdx);
+        }
       }
-      
 
       G.layout.SetEngine();
       G.galleryResizeEventEnabled=false;
@@ -2469,19 +2749,13 @@ TODO:
         G.$E.conTnBottom.empty();
       }
 
-      // scroll to top of the gallery if needed
-      var wp=getViewport();
-      var galleryOTop=G.$E.base.offset().top;
-      if( galleryOTop < wp.t ) {
-        jQuery('html, body').animate({scrollTop: galleryOTop}, 200);
-      }
-
       // navigation toolbar (breadcrumb + tag filters)
       GalleryNavigationBar(albumIdx);
-      
+
       if( G.GOM.firstDisplay ) {
         G.GOM.firstDisplay=false;
-        GalleryRenderPart1( albumIdx );
+        // GalleryRenderPart1( albumIdx );
+        setTimeout( function() { GalleryRenderPart1( albumIdx )}, G.O.galleryRenderDelay);
       }
       else {
         var hideNavigationBar=false;
@@ -2492,21 +2766,27 @@ TODO:
         // hide everything
         var tweenable = new NGTweenable();
         tweenable.tween({
-          from: { 'opacity': 1 },
-          to: { 'opacity': 0 },
-          duration: 200,
-          easing: 'easeInQuart',
-          attachment: { h: hideNavigationBar },
-          step: function (state, att) {
+          from:         { 'opacity': 1 },
+          to:           { 'opacity': 0 },
+          duration:     200,
+          easing:       'easeInQuart',
+          attachment:   { h: hideNavigationBar },
+          step:         function (state, att) {
             G.$E.conTnParent.css({'opacity': state.opacity });
             if( att.h ) {
               G.$E.conNavigationBar.css({ 'opacity': state.opacity });
             }
           },
-          finish: function (state, att) {
+          finish:       function (state, att) {
             G.$E.conTnParent.css({'opacity': 0});
             if( att.h ) {
               G.$E.conNavigationBar.css({ 'opacity': 0, 'display': 'none' });
+            }
+            // scroll to top of the gallery if needed
+            var wp=getViewport();
+            var galleryOTop=G.$E.base.offset().top;
+            if( galleryOTop < wp.t ) {
+              jQuery('html, body').animate({scrollTop: galleryOTop}, 200);
             }
             GalleryRenderPart1( albumIdx );
           }
@@ -2528,19 +2808,23 @@ TODO:
           to:       { 'opacity': 1 },
           duration: 200,
           easing:   'easeInQuart',
-          step: function (state, att) {
+          step:     function (state, att) {
             G.$E.conNavigationBar.css({ 'opacity': state.opacity });
           },
-          finish: function (state, att) {
+          finish:   function (state, att) {
             G.$E.conNavigationBar.css({ 'opacity': 1 });
+            // display gallery
+            GalleryRenderPart2( albumIdx );
           }
         });
       }
+      else {
+        // display gallery
+        GalleryRenderPart2( albumIdx );
+      }
 
-      // display gallery
-      GalleryRenderPart2( albumIdx );
     }
-    
+
     // Gallery render part 2 -> remove all thumbnails
     function GalleryRenderPart2(albumIdx) {
       G.GOM.lastZIndex = parseInt(G.$E.base.css('z-index'));
@@ -2548,8 +2832,6 @@ TODO:
         G.GOM.lastZIndex=0;
       }
       G.$E.conTnParent.css({'opacity': 0 });
-      // G.$E.conTn.hide(0).off().show(0).html('');
-      // G.$E.conTn.off().html('');
       G.$E.conTn.off().empty();
       var l=G.I.length;
       for( var i=0; i < l ; i++ ) {
@@ -2566,22 +2848,29 @@ TODO:
         item.top=0;
         item.resizedContentWidth=0;
         item.resizedContentHeight=0;
+        item.thumbnailImgRevealed=false;
       }
 
-      G.$E.conTn.css( G.CSStransformName , 'translateX('+0+'px)');
+      if( G.CSStransformName == null ) {
+        G.$E.conTn.css( 'left' , '0px');
+      }
+      else {
+        G.$E.conTn.css( G.CSStransformName , 'translateX('+0+'px)');
+      }
+
       G.$E.conTnParent.css({ left: 0, opacity: 1 });
 
       GalleryRenderPart3(albumIdx);
 
     }
-    
+
     // Gallery render part 2 -> start building the new gallery
     function GalleryRenderPart3(albumIdx) {
-      var d=new Date();      
-      
+      var d=new Date();
+
       G.GOM.items = [];
       G.GOM.displayedMoreSteps=0;
-// retrieve annotation height      
+      // retrieve annotation height
       var annotationHeight = 0;
       if( G.O.thumbnailLabel.get('position') == 'onBottom' ) {
         // retrieve height each time because size can change depending on thumbnail's settings
@@ -2594,79 +2883,76 @@ TODO:
       G.GOM.albumIdx=albumIdx;
 
       TriggerCustomEvent('galleryRenderEnd');
-      if( typeof G.O.fnGalleryRenderEnd == 'function' ) {
-        G.O.fnGalleryRenderEnd(albumIdx);
+      if( G.O.fnGalleryRenderEnd !== null ) {
+        if( typeof G.O.fnGalleryRenderEnd == 'function' ) {
+          G.O.fnGalleryRenderEnd(albumIdx);
+        }
+        else {
+          // defined in markup
+          window[G.O.fnGalleryRenderEnd](albumIdx);
+        }
       }
-      
+
       // Step 1: populate GOM
       if( GalleryPopulateGOM() ) {
-      
+
         // step 2: calculate layout
         GallerySetLayout();
 
         // step 3: display gallery
+        GalleryAppear();
         GalleryDisplay( false );
         G.galleryResizeEventEnabled=true;
       }
       else {
         G.galleryResizeEventEnabled=true;
       }
-      
-      if( G.O.debugMode ) {
-        console.log('GalleryRenderPart3: '+ (new Date()-d));
-      }
+
+      if( G.O.debugMode ) { console.log('GalleryRenderPart3: '+ (new Date()-d)); }
 
     }
-    
-    
+
+
     // Resize the gallery
     function GalleryResize( GOMidx ) {
       var d=new Date();
       G.galleryResizeEventEnabled=false;
       if( GallerySetLayout( GOMidx ) == false ) {
         G.galleryResizeEventEnabled=true;
-        if( G.O.debugMode ) {
-          console.log('GalleryResize1: '+ (new Date()-d));
-        }
+        if( G.O.debugMode ) { console.log('GalleryResize1: '+ (new Date()-d)); }
         return;
       }
-      if( G.O.debugMode ) {
-        console.log('GalleryResizeSetLayout: '+ (new Date()-d));
-      }
+      if( G.O.debugMode ) { console.log('GalleryResizeSetLayout: '+ (new Date()-d)); }
 
       GalleryDisplay( false );
 
-      // G.galleryResizeEventEnabled=true;
-      if( G.O.debugMode ) {
-        console.log('GalleryResizeFull: '+ (new Date()-d));
-      }
+      if( G.O.debugMode ) { console.log('GalleryResizeFull: '+ (new Date()-d)); }
     }
-    
-    
-    
+
+
+
     // copy items (album content) to GOM
     function GalleryPopulateGOM() {
-      // G.galleryResizeEventEnabled=false;
-      
+
       var preloadImages='';
       var imageSizeRequested=false;
-      //var nbTn=G.GOM.items.length;
       var albumID=G.I[G.GOM.albumIdx].GetID();
       var l=G.I.length;
       var cnt=0;
 
-      for( var idx=0; idx<l; idx++ ) {
+      for( var idx=0; idx < l; idx++ ) {
         var item=G.I[idx];
         // check album
-        if( item.albumID == albumID && item.checkTagFilter() && item.isSearchFound() ) {
+        if( item.isToDisplay(albumID) ) {
         var w=item.thumbImg().width;
           var h=item.thumbImg().height;
           // if unknown image size and layout is not grid --> we need to retrieve the size of the images
           if( G.layout.prerequisite.imageSize && ( w == 0 || h == 0) ) {
+          // if( true ) {
             imageSizeRequested=true;
             preloadImages+='<img src="'+item.thumbImg().src+'" data-idx="'+cnt+'" data-albumidx="'+G.GOM.albumIdx+'">';
           }
-          
+
           // set default size if required
           if( h == 0 ) {
             h=G.tn.defaultSize.getHeight();
@@ -2680,19 +2966,24 @@ TODO:
         }
       }
 
-      // G.$E.base.trigger('galleryObjectModelBuilt.nanogallery2', new Event('galleryObjectModelBuilt.nanogallery2'));
       TriggerCustomEvent('galleryObjectModelBuilt');
-      if( typeof G.O.fnGalleryObjectModelBuilt == 'function' ) {
-        G.O.fnGalleryObjectModelBuilt();
+      if( G.O.fnGalleryObjectModelBuilt !== null ) {
+        if( typeof G.O.fnGalleryObjectModelBuilt == 'function' ) {
+          G.O.fnGalleryObjectModelBuilt();
+        }
+        else {
+          // defined in markup
+          window[G.O.fnGalleryObjectModelBuilt]();
+        }
       }
-      
+
       if( imageSizeRequested ) {
         // preload images to retrieve their size and then resize the gallery (=GallerySetLayout()+ GalleryDisplay())
         var $newImg=jQuery(preloadImages);
         var gi_imgLoad = ngimagesLoaded( $newImg );
         $newImg=null;
         gi_imgLoad.on( 'progress', function( instance, image ) {
-        
+
           if( image.isLoaded ) {
             var idx=image.img.getAttribute('data-idx');
             var albumIdx=image.img.getAttribute('data-albumidx');
@@ -2704,7 +2995,7 @@ TODO:
               var item=G.I[curTn.thumbnailIdx];
               item.thumbs.width[G.GOM.curNavLevel][G.GOM.curWidth]=curTn.imageWidth;
               item.thumbs.height[G.GOM.curNavLevel][G.GOM.curWidth]=curTn.imageHeight;
- 
+
               if( G.layout.engine == 'GRID' && G.tn.opt.Get('crop') === true && item.$getElt('.nGY2GThumbnailImg') !== null ) {
                 // special case (GRID + cropped thumbnails) -> just reposition the image in the thumbnail
                 if( item.thumbImg().height > item.thumbImg().width ) {
@@ -2716,10 +3007,10 @@ TODO:
 
                   // step 1: adjust height
                   var r2=G.tn.settings.getH()/item.thumbImg().height;
-                  
+
                   var newH= G.tn.settings.getH();
                   var newW= item.thumbImg().width*r2;
-                  
+
                   // step 2: check if width needs to be adjusted
                   if( newW >= G.tn.settings.getW() ) {
                     // no adjustement
@@ -2738,8 +3029,8 @@ TODO:
 
               // resize the gallery
               G.GalleryResizeThrottled();
-              
-              // set the retrieved size to all levels with same configuration  
+
+              // set the retrieved size to all levels with same configuration
               var object=item.thumbs.width.l1;
               for (var property in object) {
                 if (object.hasOwnProperty(property)) {
@@ -2771,9 +3062,9 @@ TODO:
       else {
         return true;
       }
-      
+
     }
-    
+
     //----- Calculate the layout of the thumbnails
     function GallerySetLayout( GOMidx ) {
       var r = true;
@@ -2793,32 +3084,38 @@ TODO:
           r= GallerySetLayoutGrid( areaWidth, GOMidx );
           break;
       }
-      
+
       TriggerCustomEvent('galleryLayoutApplied');
-      if( typeof G.O.fnGalleryLayoutApplied == 'function' ) {
-        G.O.fnGalleryLayoutApplied();
+      if( G.O.fnGalleryLayoutApplied !== null ) {
+        if( typeof G.O.fnGalleryLayoutApplied == 'function' ) {
+          G.O.fnGalleryLayoutApplied();
+        }
+        else {
+          // defined in markup
+          window[G.O.fnGalleryLayoutApplied]();
+        }
       }
       return r;
 
     }
-    
-    
+
+
     //----- CASCADING LAYOUT
     function GallerySetLayoutHeightAuto( areaWidth, GOMidx ) {
       var areaW=G.$E.conTnParent.width(),
-      curCol=0,
-      curRow=0,
-      colHeight=[],
-      maxCol=NbThumbnailsPerRow(areaWidth),      //parseInt(areaW/G.tn.defaultFullWidth);
-      gutterWidth=0,
-      gutterHeight=G.tn.opt.Get('gutterHeight');
+      curCol =        0,
+      curRow =        0,
+      colHeight =     [],
+      maxCol =        NbThumbnailsPerRow(areaWidth),
+      gutterWidth =   0,
+      gutterHeight =  G.tn.opt.Get('gutterHeight');
 
-      var tnWidth=G.tn.defaultSize.getOuterWidth();
-      var nbTn=G.GOM.items.length;
+      var tnWidth =   G.tn.defaultSize.getOuterWidth();
+      var nbTn =      G.GOM.items.length;
 
       if( G.O.thumbnailAlignment == 'justified' ) {
         maxCol=Math.min(maxCol,nbTn);
-        gutterWidth=(maxCol==1?0:(areaWidth-(maxCol*tnWidth))/(maxCol-1));
+        gutterWidth=( maxCol == 1 ? 0 : (areaWidth-(maxCol*tnWidth))/(maxCol-1) );
       }
       else {
         gutterWidth=G.tn.opt.Get('gutterWidth');
@@ -2845,12 +3142,12 @@ TODO:
           curTn.height=curTn.resizedContentHeight+borderHeight+G.tn.labelHeight.get();
           curTn.width=tnWidth;
           curTn.row=0;
-          
+
           if( curRow == 0 ) {
             // first row
             curPosX=curCol*(tnWidth+gutterWidth);
             colHeight[curCol]=curTn.height+gutterHeight;
-            
+
             curCol++;
             if( curCol >= maxCol ) {
               curCol=0;
@@ -2885,8 +3182,8 @@ TODO:
       G.GOM.displayArea.width=maxCol*(tnWidth+gutterWidth)-gutterWidth;
       return true;
     }
-    
-    
+
+
     //----- JUSTIFIED LAYOUT
     function GallerySetLayoutWidthtAuto( areaWidth, GOMidx ) {
       var curWidth=               0,
@@ -2933,19 +3230,19 @@ TODO:
           else {
             rowHasHorizontal = true;
           }
-          
+
           if( (curWidth + gutterWidth + imageWidth) < (areaWidth - (nbTnInCurrRow*borderWidth)) ) {
             // enough place left in the current row
             curWidth+=imageWidth+gutterWidth;
             rowHeight[rowNum]=tnHeight;
-            
+
             // prevent incomplete row from being heigher than the previous ones.
             // by grief-of-these-days
             var rowHeightLimit=Math.max(rowHasVertical ? maxRowHeightVertical : 0, rowHasHorizontal ? maxRowHeightHorizontal : 0);
             if( rowHeightLimit > 0 ) {
               rowHeight[rowNum]=Math.min(rowHeight[rowNum],rowHeightLimit);
             }
-            
+
             rowLastItem[rowNum]=i;
           }
           else {
@@ -2954,7 +3251,7 @@ TODO:
             var ratio=(areaWidth-nbTnInCurrRow*borderWidth) / curWidth;
             var rH=Math.floor(tnHeight*ratio);
             rowHeight[rowNum]=rH;
-            
+
             // save the max row height for each thumb orientation.
             // by grief-of-these-days
             if( rowHasVertical ) {
@@ -2963,7 +3260,7 @@ TODO:
             if( rowHasHorizontal ) {
               maxRowHeightHorizontal=Math.max(maxRowHeightHorizontal,rH);
             }
-            
+
             rowLastItem[rowNum]=i;
             bNewRow=true;
           }
@@ -2976,9 +3273,9 @@ TODO:
       curPosY=0;
       lastPosX=0;
       cnt=0;
-      
+
       G.GOM.lastFullRow=0;    // display at leat 1 row (even if not full)
-      
+
       // second loop --> calculate each thumbnail size
       for( var i=0; i < nbTn ; i++ ) {
         var curTn=G.GOM.items[i];
@@ -3000,7 +3297,7 @@ TODO:
               }
             }
           }
-          
+
           var rh=parseInt(rowHeight[rowNum]);
           imageWidth=parseInt(imageWidth);
 
@@ -3034,19 +3331,19 @@ TODO:
           return false;
         }
       }
-      
+
       var newTop=0;
       if( typeof GOMidx !== 'undefined' ) {
         // gallery hover effect
         if( G.GOM.albumIdx != -1 ) {
           var hoveredTn=G.GOM.items[GOMidx];
           var item=G.I[hoveredTn.thumbnailIdx];
-          
+
           // hovered thumbnail
           hoveredTn.width+=40;
           hoveredTn.height+=40;
           // todo : left
-          
+
           for( var i=0; i < nbTn ; i++ ) {
             var curTn=G.GOM.items[i];
             if( curTn.imageWidth > 0 ) {
@@ -3075,18 +3372,18 @@ TODO:
             }
           }
         }
-        
+
       }
-      
+
       G.GOM.displayArea.width=areaWidth;
       return true;
-    }    
-    
+    }
+
 
     //----- GRID LAYOUT
     function GallerySetLayoutGrid( areaWidth ) {
       var curPosX=      0,
-      curPosY=          0,   
+      curPosY=          0,
       gutterWidth=      0,
       gutterHeight=     G.tn.opt.Get('gutterHeight'),
       maxCol=           NbThumbnailsPerRow(areaWidth),
@@ -3097,7 +3394,7 @@ TODO:
       tnWidth=          G.tn.defaultSize.getOuterWidth(),
       tnHeight=         G.tn.defaultSize.getOuterHeight()+G.tn.labelHeight.get();
       var nbTn=         G.GOM.items.length;
-      
+
       // retrieve gutter width
       if( G.O.thumbnailAlignment == 'justified' ) {
         maxCol=Math.min(maxCol,nbTn);
@@ -3109,7 +3406,7 @@ TODO:
 
       if( G.O.RTL ) {
         // first loop to retrieve the real used width of the area
-        for( var i=0; i < nbTn ; i++ ) {
+        for( var i= 0 ; i < nbTn ; i++ ) {
           if( curPosY != 0 ) {
             break;
           }
@@ -3118,7 +3415,7 @@ TODO:
             cols[curCol]=curPosX;
             w=curPosX;
           }
-          
+
           curCol++;
           if( curCol >= maxCol ){
             curCol=0;
@@ -3129,7 +3426,7 @@ TODO:
         curPosY=0;
         curCol=0;
       }
-      
+
       G.GOM.lastFullRow=0;    // display at leat 1 row (even if not full)
       var lastPosY=0;
       var row=0;
@@ -3147,7 +3444,7 @@ TODO:
         if( G.O.RTL ) {
           x=parseInt(newAreaWidth)-curPosX-tnWidth;
         }
-        
+
         // MANDATORY : set thumbnail position AND size
         var curTn=G.GOM.items[i];
         curTn.top=curPosY;
@@ -3173,13 +3470,18 @@ TODO:
     //----- Display the thumbnails according to the calculated layout
     function GalleryDisplay( forceTransition ) {
 
-      G.$E.conTn.css( G.CSStransformName , 'translateX('+0+'px)');
+      if( G.CSStransformName == null ) {
+        G.$E.conTn.css( 'left' , '0px');
+      }
+      else {
+        G.$E.conTn.css( G.CSStransformName , 'translateX('+0+'px)');
+      }
 
       var nbTn=G.GOM.items.length;
       G.GOM.itemsDisplayed=0;
       var threshold = 50;
       var cnt=0;    // counter for delay between each thumbnail display
-      
+
       var vp=getViewport();
       G.GOM.cache.viewport=vp;
 
@@ -3187,7 +3489,7 @@ TODO:
       G.GOM.cache.containerOffset=containerOffset;
 
       GalleryRenderGetInterval();
-      
+
       for( var i=0; i < nbTn ; i++ ) {
         var curTn=G.GOM.items[i];
         if( i >= G.GOM.displayInterval.from && cnt < G.GOM.displayInterval.len ) {
@@ -3208,7 +3510,7 @@ TODO:
 
       var tnToDisplay = [];
       var tnToReDisplay = [];
-      
+
       G.GOM.clipArea.top=-1;
       cnt=0;
       var lastTnIdx=-1;
@@ -3221,7 +3523,7 @@ TODO:
             G.GOM.clipArea.top=curTn.top;
           }
           G.GOM.clipArea.height=Math.max(G.GOM.clipArea.height, curTn.top-G.GOM.clipArea.top+curTn.height);
-        
+
           if( curTn.neverDisplayed ) {
             // thumbnail is not displayed -> check if in viewport to display or not
             var top=containerOffset.top+(curTn.top-G.GOM.clipArea.top);
@@ -3286,7 +3588,7 @@ TODO:
         }
       }
 
-      
+
       // batch set position (and display animation) to all thumbnails
       // first display newly built thumbnails
       var nbBuild=tnToDisplay.length;
@@ -3310,19 +3612,19 @@ TODO:
           G.galleryResizeEventEnabled=true;
         }, nbBuild * G.tn.opt.Get('displayInterval'));
       }
-      
+
       // G.$E.base.trigger('galleryDisplayed.nanogallery2', new Event('galleryDisplayed.nanogallery2'));
       TriggerCustomEvent('galleryDisplayed');
     }
-    
-    
+
+
     // Thumbnail: set the new position
     function ThumbnailSetPosition( GOMidx, cnt ) {
-      var newTop= 0;
-      var curTn=  G.GOM.items[GOMidx];
-      var idx=    G.GOM.items[GOMidx].thumbnailIdx;
-      var item=   G.I[idx];
-    
+      var newTop=   0;
+      var curTn=    G.GOM.items[GOMidx];
+      var idx=      G.GOM.items[GOMidx].thumbnailIdx;
+      var item=     G.I[idx];
+
       if( curTn.neverDisplayed ) {
         // thumbnail is built but has never been displayed (=first display)
         var top=curTn.top-G.GOM.clipArea.top;
@@ -3335,6 +3637,22 @@ TODO:
           item.$elt.css({ display: 'block', top: top , left: curTn.left });
         }
         newTop=top;
+
+        // display the image of the thumbnail when fully loaded
+        if( G.O.thumbnailWaitImageLoaded === true ) {
+          var gi_imgLoad = ngimagesLoaded( item.$getElt('.nGY2TnImg') );
+          gi_imgLoad.on( 'progress', function( instance, image ) {
+            if( image.isLoaded ) {
+              var idx=image.img.getAttribute('data-idx');
+              var albumIdx=image.img.getAttribute('data-albumidx');
+              if( albumIdx == G.GOM.albumIdx ) {
+                // ignore event if not on current album
+                G.I[idx].ThumbnailImageReveal();
+              }
+            }
+          });
+        }
+        // display the thumbnail
         ThumbnailAppear(GOMidx, cnt);
 
         curTn.displayed=true;
@@ -3362,10 +3680,10 @@ TODO:
                   duration:   300,
                   delay:      cnt * G.tn.opt.Get('displayInterval'),
                   easing:     'easeOutQuart',
-                  step:   function (state, att) {
+                  step:       function (state, att) {
                     att.$e.css(state);
                   },
-                  finish: function (state, att) {
+                  finish:     function (state, att) {
                     att.$e.css(state);
                     this.dispose();
                   }
@@ -3394,13 +3712,13 @@ TODO:
       }
       item.left=curTn.left;
       item.top=newTop;
-      
+
       // set new size if changed
       if( item.width != curTn.width || item.height != curTn.height ) {
         item.$elt.css({ width: curTn.width , height: curTn.height });
         item.width=curTn.width;
         item.height=curTn.height;
-        
+
         // if( curTn.resizedContentWidth > 0 ) {
         // resize also the content (=image)
         if( item.resizedContentWidth != curTn.resizedContentWidth || item.resizedContentHeight != curTn.resizedContentHeight ) {
@@ -3415,9 +3733,9 @@ TODO:
           item.resizedContentHeight=curTn.resizedContentHeight;
         }
       }
-      
-      
-      // add counter of remaining (not displayed) images 
+
+
+      // add counter of remaining (not displayed) images
       if( G.GOM.lastDisplayedIdxNew == GOMidx &&  G.layout.support.rows ) {
         if( (G.galleryDisplayMode.Get() == 'ROWS' && G.galleryMaxRows.Get() > 0) || (G.galleryDisplayMode.Get() == 'FULLCONTENT' && G.galleryLastRowFull.Get() && G.GOM.lastFullRow != -1) ){
           // number of items
@@ -3433,8 +3751,8 @@ TODO:
       }
 
     }
-   
-    
+
+
     // Compute the height of the annotation part of a thumbnail (title+description, both single line)
     function ThumbnailGetAnnotationHeight() {
       var newElt= [],
@@ -3444,50 +3762,49 @@ TODO:
       if( G.O.thumbnailLabel.get('display') == false  ) {
         return 0;
       }
-      
+
       var desc='';
       if( G.O.thumbnailLabel.get('displayDescription') == true ) {
         desc='aAzZjJ';
       }
 
       // visibility set to hidden
-      newElt[newEltIdx++]='<div class="nGY2GThumbnail '+G.O.theme+'" style="display:block;visibility:hidden;position:absolute;top:-9999px;left:-9999px;" ><div class="nGY2GThumbnailSub">';
+      newElt[newEltIdx++] = '<div class="nGY2GThumbnail '+G.O.theme+'" style="display:block;visibility:hidden;position:absolute;top:-9999px;left:-9999px;" ><div class="nGY2GThumbnailSub">';
       if( G.O.thumbnailLabel.get('display') == true ) {
         // Labels: title and description
-        newElt[newEltIdx++]= '  <div class="nGY2GThumbnailLabel" '+ G.tn.style.getLabel() +'>';
-        newElt[newEltIdx++]= '    <div class="nGY2GThumbnailAlbumTitle" '+G.tn.style.getTitle()+'>aAzZjJ</div>';
-        newElt[newEltIdx++]= '    <div class="nGY2GThumbnailDescription" '+G.tn.style.getDesc()+'>'+desc+'</div>';
-        newElt[newEltIdx++]= '  </div>';
+        newElt[newEltIdx++] = '  <div class="nGY2GThumbnailLabel" '+ G.tn.style.getLabel() +'>';
+        newElt[newEltIdx++] = '    <div class="nGY2GThumbnailAlbumTitle" '+G.tn.style.getTitle()+'>aAzZjJ</div>';
+        newElt[newEltIdx++] = '    <div class="nGY2GThumbnailDescription" '+G.tn.style.getDesc()+'>'+desc+'</div>';
+        newElt[newEltIdx++] = '  </div>';
       }
-      
+
       newElt[newEltIdx++]='</div></div>';
-    
-      // var $newDiv =jQuery(newElt.join('')).appendTo('body');
-      var $newDiv =jQuery(newElt.join('')).appendTo(G.$E.conTn);
-      var h=$newDiv.find('.nGY2GThumbnailLabel').outerHeight(true);
+
+      var $newDiv = jQuery(newElt.join('')).appendTo(G.$E.conTn);
+      var h = $newDiv.find('.nGY2GThumbnailLabel').outerHeight(true);
       $newDiv.remove();
 
       return h;
     }
-    
+
     function ThumbnailBuildStacks () {
       var ns=G.tn.opt.Get('stacks');
       if( ns == 0 ) {
         return '';
       }
-     
+
       var s='';
       for( var i=0; i<ns; i++ ) {
         s='<div class="nGY2GThumbnailStack " style="display:none;"></div>'+s;
       }
       return s;
     }
-    
+
     //----- Build one UP thumbnail (=navigation thumbnail)
     function ThumbnailBuildAlbumpUp( item, idx, GOMidx ) {
       var newElt= [],
       newEltIdx=  0;
-      
+
       newElt[newEltIdx++]=ThumbnailBuildStacks()+'<div class="nGY2GThumbnail" style="display:none;opacity:0;" >';
       newElt[newEltIdx++]='  <div class="nGY2GThumbnailSub">';
 
@@ -3498,17 +3815,17 @@ TODO:
       newElt[newEltIdx++]='    <div class="nGY2GThumbnailAlbumUp" style="width:'+w+'px;height:'+h+'px;">'+G.O.icons.thumbnailAlbumUp+'</div>';
       newElt[newEltIdx++]='  </div>';
       newElt[newEltIdx++]='</div>';
-      
+
       var $newDiv =jQuery(newElt.join('')).appendTo(G.$E.conTn); //.animate({ opacity: 1},1000, 'swing');  //.show('slow'); //.fadeIn('slow').slideDown('slow');
-      
+
       item.$elt=$newDiv;
       $newDiv.data('index',GOMidx);
       item.$getElt('.nGY2GThumbnailImg').data('index',GOMidx);
-      
+
       return;
     }
 
-    
+
     //----- Build one thumbnail
     function ThumbnailBuild( item, idx, GOMidx, lastOne ) {
       item.eltTransform=  [];
@@ -3525,23 +3842,50 @@ TODO:
       newEltIdx=0;
 
       newElt[newEltIdx++]=ThumbnailBuildStacks()+'<div class="nGY2GThumbnail" style="display:none;opacity:0;"><div class="nGY2GThumbnailSub '+(G.O.thumbnailSelectable && item.selected?"nGY2GThumbnailSubSelected":"")+'">';
-      
+
       var src=item.thumbImg().src,
       sTitle=getThumbnailTitle(item),
       sDesc=getTumbnailDescription(item);
-      
+
+      // dominant colorS (blurred preview image)
+      var imgBlurred=G.emptyGif;
+      if( item.imageDominantColors != null ) {
+        imgBlurred=item.imageDominantColors;
+      }
+      // dominant color -> background color
+      var bg=''
+      if( item.imageDominantColor != null ) {
+        bg='background:'+item.imageDominantColor+';';
+      }
+
+      var op='opacity:1;';
+      if( G.O.thumbnailWaitImageLoaded == true ) {
+        op='opacity:0;';
+      }
+
       // image
       switch( G.layout.engine ) {
         case 'CASCADING':
-          newElt[newEltIdx++]='<div class="nGY2GThumbnailImage" style="width:'+G.tn.settings.getW()+'px;"><img class="nGY2GThumbnailImg" src="'+src+'" alt="'+sTitle+'" style="max-width:'+G.tn.settings.getW()+'px;"></div>';
+          // fixed width
+          newElt[newEltIdx++]='<div class="nGY2GThumbnailImage" style="width:'+G.tn.settings.getW()+'px;'+bg+'">';
+          newElt[newEltIdx++]='  <img class="nGY2GThumbnailImg nGY2TnPreview" src="'+imgBlurred+'" style="max-width:'+G.tn.settings.getW()+'px;">';
+          newElt[newEltIdx++]='  <img class="nGY2GThumbnailImg nGY2TnImg" src="'+src+'" alt="'+sTitle+'" style="max-width:'+G.tn.settings.getW()+'px;'+op+'" data-idx="'+idx+'" data-albumidx="'+G.GOM.albumIdx+'">';
+          newElt[newEltIdx++]='</div>';
           break;
         case 'JUSTIFIED':
-          newElt[newEltIdx++]='<div class="nGY2GThumbnailImage" style="height:'+G.tn.settings.getH()+'px;"><img class="nGY2GThumbnailImg" src="'+src+'" alt="'+sTitle+'" ></div>';
+          // fixed height
+          newElt[newEltIdx++]='<div class="nGY2GThumbnailImage" style="height:'+G.tn.settings.getH()+'px;'+bg+'">';
+          newElt[newEltIdx++]='  <img class="nGY2GThumbnailImg nGY2TnPreview" src="'+imgBlurred+'" >';
+          newElt[newEltIdx++]='  <img class="nGY2GThumbnailImg nGY2TnImg" src="'+src+'" alt="'+sTitle+'" style="'+op+'" data-idx="'+idx+'" data-albumidx="'+G.GOM.albumIdx+'">';
+          newElt[newEltIdx++]='</div>';
           break;
         default:    // GRID
+          // fixed width and height
           var imgSize='max-width:'+G.tn.settings.getW()+'px;max-height:'+G.tn.settings.getH()+'px;'
-          // crop images => no black border
+          var imgBWidth='';
+
           if( G.tn.opt.Get('crop') == true && item.thumbImg().height > 0 && item.thumbImg().width > 0 ) {
+            // crop images => no black border
             if( item.thumbImg().height > item.thumbImg().width ) {
               // portrait
               imgSize='width:'+G.tn.settings.getW()+'px;';
@@ -3551,15 +3895,16 @@ TODO:
 
               // step 1: adjust height
               var r2=G.tn.settings.getH()/item.thumbImg().height;
-              
+
               var newH= G.tn.settings.getH();
               var newW= item.thumbImg().width*r2;
-              
+
               // step 2: check if width needs to be adjusted
               if( newW >= G.tn.settings.getW() ) {
                 // no adjustement
                 var d=-(item.thumbImg().width*r2-G.tn.settings.getW()) / 2;
                 imgSize='height:'+G.tn.settings.getH()+'px;left:'+d+'px;';
+                imgBWidth='width:'+item.thumbImg().width+'px;';     // set the width of the blurred preview image
               }
               else {
                 // yes, adjust width
@@ -3570,7 +3915,10 @@ TODO:
               }
             }
           }
-          newElt[newEltIdx++]='<div class="nGY2GThumbnailImage" style="width:'+G.tn.settings.getW()+'px;height:'+G.tn.settings.getH()+'px;"><img class="nGY2GThumbnailImg" src="'+src+'" alt="'+sTitle+'" style="'+imgSize+'" ></div>';
+          newElt[newEltIdx++]='<div class="nGY2GThumbnailImage" style="width:'+G.tn.settings.getW()+'px;height:'+G.tn.settings.getH()+'px;'+bg+'">';
+          newElt[newEltIdx++]='  <img class="nGY2GThumbnailImg nGY2TnPreview" src="'+imgBlurred+'"  style="'+imgSize+imgBWidth+'">';
+          newElt[newEltIdx++]='  <img class="nGY2GThumbnailImg nGY2TnImg" src="'+src+'" alt="'+sTitle+'" style="'+imgSize+op+'" data-idx="'+idx+'" data-albumidx="'+G.GOM.albumIdx+'" >';
+          newElt[newEltIdx++]='</div>';
           break;
       }
 
@@ -3593,54 +3941,60 @@ TODO:
 
       // Tool layer
       newElt[newEltIdx++]=ThumbnailBuildTools(item, lastOne);
-      
+
       newElt[newEltIdx++]='</div>';
       newElt[newEltIdx++]='</div>';
-      
+
       var $newDiv =jQuery(newElt.join('')).appendTo(G.$E.conTn);
 
       item.$elt=$newDiv;
       $newDiv.data('index',GOMidx);
       item.$getElt('.nGY2GThumbnailImg').data('index',GOMidx);
 
-      
+
       // Custom init function
-      if( typeof G.O.fnThumbnailInit == 'function' ) { 
-        G.O.fnThumbnailInit($newDiv, item, GOMidx);
+      if( G.O.fnThumbnailInit !== null ) {
+        if( typeof G.O.fnThumbnailInit == 'function' ) {
+          G.O.fnThumbnailInit($newDiv, item, GOMidx);
+        }
+        else {
+          // defined in markup
+          window[G.O.fnThumbnailInit]($newDiv, item, GOMidx);
+        }
       }
 
       if( item.title != 'image gallery by nanogallery2 [build]' ) {
         ThumbnailOverInit(GOMidx);
       }
-      
+
       return ;
     }
 
-    
+
     // Thumbnail layer for tools (toolbars and counter)
     function ThumbnailBuildTools( item, lastThumbnail ) {
-    
+
       // toolbars
       var tb=ThumbnailBuildToolbarOne(item, 'topLeft');
       tb+=ThumbnailBuildToolbarOne(item, 'topRight');
       tb+=ThumbnailBuildToolbarOne(item, 'bottomLeft');
       tb+=ThumbnailBuildToolbarOne(item, 'bottomRight');
-      
+
       // counter of not displayed images
       tb+='<div class="nGY2GThumbnailIconsFullThumbnail"></div>';
 
       return tb;
-    
+
     }
-    
+
     function ThumbnailBuildToolbarOne( item, position ) {
-      var toolbar='';
-      var tb=G.tn.toolbar.get(item);
-      var width={ xs:0, sm:1, me:2, la:3, xl:4 };
-      var cnt=0;
-      
+      var toolbar = '';
+      var tb =      G.tn.toolbar.get(item);
+      var width =   { xs:0, sm:1, me:2, la:3, xl:4 };
+      var cnt =     0;
+
       if( tb[position] != '' ) {
-        var pos='';
+        var pos='top:0; right:0; text-align:right;';     // 'topRight' and default
         switch( position ) {
           case 'topLeft':
             pos='top:0; left:0; text-align:left;:';
@@ -3651,14 +4005,10 @@ TODO:
           case 'bottomLeft':
             pos='bottom:0; left:0; text-align:left;';
             break;
-          case 'topRight':
-          default:
-            pos='top:0; right:0; text-align:right;';
-            break;
         }
-        
+
         toolbar+= '  <ul class="nGY2GThumbnailIcons" style="'+pos+'">';
-        
+
         var icons=tb[position].split(',');
         var nb=icons.length;
         for( var i=0; i<nb; i++ ) {
@@ -3674,7 +4024,7 @@ TODO:
             }
             tIcon=icon.substring(2);
           }
-          
+
           if( display ) {
             var sp=(i+1<nb ? '&nbsp;' :'');
             switch( tIcon ) {
@@ -3768,7 +4118,7 @@ TODO:
         }
         toolbar+= '  </ul>';
       }
-      
+
       if( cnt > 0 ) {
         return toolbar;
       }
@@ -3776,9 +4126,9 @@ TODO:
         return '';
       }
     }
-    
+
     function getThumbnailTitle( item ) {
-    
+
       var sTitle=item.title;
       if( G.O.thumbnailLabel.get('display') == true ) {
         if( sTitle === undefined || sTitle.length == 0 ) { sTitle='&nbsp;'; }
@@ -3790,13 +4140,13 @@ TODO:
           sTitle=sTitle.substring(0,G.O.thumbnailLabel.get('titleMaxLength'))+'...';
         }
       }
-      
+
       return sTitle;
     }
 
     function getTumbnailDescription( item ) {
       var sDesc='';
-      if( G.O.thumbnailLabel.get('displayDescription') == true ) { 
+      if( G.O.thumbnailLabel.get('displayDescription') == true ) {
         if( item.kind == 'album' ) {
           if( G.i18nTranslations.thumbnailImageDescription != '' ) {
             sDesc=G.i18nTranslations.thumbnailAlbumDescription;
@@ -3820,16 +4170,16 @@ TODO:
           sDesc='&nbsp;';
         }
       }
-      
+
       return sDesc;
     }
 
-    
-    
-    // Retrieve the maximum number of thumbnails in one row
+
+
+    // Retrieve the maximum number of thumbnails that fits in one row
     function NbThumbnailsPerRow(areaWidth) {
       var tnW=G.tn.defaultSize.getOuterWidth();
-      
+
       var nbMaxTn=0;
       if( G.O.thumbnailAlignment == 'justified' ) {
         nbMaxTn=Math.floor((areaWidth)/(tnW));
@@ -3837,21 +4187,22 @@ TODO:
       else {
         nbMaxTn=Math.floor((areaWidth+G.tn.opt.Get('gutterWidth'))/(tnW+G.tn.opt.Get('gutterWidth')));
       }
-      
+
       if(  G.O.maxItemsPerLine >0 && nbMaxTn >  G.O.maxItemsPerLine ) {
         nbMaxTn=G.O.maxItemsPerLine;
       }
-      
+
       if( nbMaxTn < 1 ) { nbMaxTn=1; }
-      
+
       return nbMaxTn
     }
-  
+
+    // Thumbnail display animation
     function ThumbnailAppear( n, cnt ) {
       var curTn=G.GOM.items[n];
       var item=G.I[G.GOM.items[n].thumbnailIdx];
 
-    
+
       if( G.tn.opt.Get('displayTransition') == 'NONE' ) {
         item.$elt.css({ opacity: 1 });
         ThumbnailAppearFinish(item);
@@ -3863,8 +4214,6 @@ TODO:
         if( (top+(curTn.top-G.GOM.clipArea.top)) >= (vp.t-50) && top <= (vp.t+vp.h+50) ) {
           // display animation only if in the current viewport
           var delay=cnt*G.tn.opt.Get('displayInterval');
-console.dir(cnt);          
-console.dir(delay);          
           if( G.tn.opt.Get('displayTransition') == 'CUSTOM' ) {
             if( G.GOM.curNavLevel == 'lN' ) {
               G.O.fnThumbnailDisplayEffect(item.$elt, item, n, delay);
@@ -3884,10 +4233,12 @@ console.dir(delay);
         }
       }
     }
-    
-    
-    // display thumbnail stacks at the end of the display animation
+
+
+    // displays thumbnail stacks at the end of the display animation
     function ThumbnailAppearFinish( item ) {
+
+      // add stacks
       var ns=G.tn.opt.Get('stacks');
       if( ns > 0 ) {
         // display stacks
@@ -3901,7 +4252,7 @@ console.dir(delay);
 
       }
     }
-    
+
 
 
     var ThumbnailDisplayAnim = {
@@ -3912,7 +4263,7 @@ console.dir(delay);
         }
         var scales=[0.95, 1, 1.05, 1.1];
         var zi=[1, 2, 3, 4];
-        
+
         var r=randomIntFromInterval(0,3);
         while( r == G.GOM.lastRandomValue ) {
           r=randomIntFromInterval(0,3);
@@ -3921,66 +4272,81 @@ console.dir(delay);
         var f=scales[r];
         // item.$elt.css({ 'z-index': G.GOM.lastZIndex+zi[r], 'box-shadow': '-1px 2px 5px 1px rgba(0, 0, 0, 0.7)' });
         item.$elt.css({ 'z-index': G.GOM.lastZIndex+zi[r], 'box-shadow': '0px 0px 5px 3px rgba(0,0,0,0.74)' });
-        
+
         var tweenable = new NGTweenable();
         tweenable.tween({
-          from:         { scale: 0.5, opacity:0  },
-          to:           { scale: f, opacity:1 },
-          attachment:   { $e:item.$elt, item: item },
+          from:         { scale: 0.5, opacity:0 },
+          to:           { scale: f,   opacity:1 },
+          attachment:   { $e:item.$elt, item: item, tw: tweenable },
           delay:        delay,
           duration:     G.tn.opt.Get('displayTransitionDuration'),
           easing:       { opacity: 'easeOutQuint', scale: G.tn.opt.Get('displayTransitionEasing') },
-          step: function (state, att) {
+          step:         function (state, att) {
+            if( att.item.$elt === null ) {  // the thumbnail may have been destroyed since the start of the animation
+              att.tw.stop(false);
+              return;
+            }
             att.$e.css( G.CSStransformName , 'scale('+state.scale+')').css('opacity',state.opacity);
           },
-          finish: function (state, att) {
+          finish:       function (state, att) {
+            if( att.item.$elt === null ) { return; }
             att.$e.css( G.CSStransformName , 'scale('+state.scale+')').css('opacity','');
             //att.$e.css( G.CSStransformName , '').css('opacity', '');
             ThumbnailAppearFinish(att.item);
           }
         });
       },
-      
+
       SCALEUP: function( item, delay ) {
         var f=G.tn.opt.Get('displayTransitionStartVal');
         if( f == 0 ) { f=0.6; }   // default value
 
         var tweenable = new NGTweenable();
         tweenable.tween({
-          from:         { scale: f, opacity:0  },
+          from:         { scale: f, opacity:0 },
           to:           { scale: 1, opacity:1 },
-          attachment:   { $e:item.$elt, item: item },
+          attachment:   { $e:item.$elt, item: item, tw: tweenable },
           delay:        delay,
           duration:     G.tn.opt.Get('displayTransitionDuration'),
           easing:       { opacity: 'easeOutQuint', scale: G.tn.opt.Get('displayTransitionEasing') },
-          step: function (state, att) {
+          step:         function (state, att) {
+            if( att.item.$elt === null ) {  // the thumbnail may have been destroyed since the start of the animation
+              att.tw.stop(false);
+              return;
+            }
             att.$e.css( G.CSStransformName , 'scale('+state.scale+')').css('opacity',state.opacity);
           },
-          finish: function (state, att) {
+          finish:       function (state, att) {
+            if( att.item.$elt === null ) { return; }
             att.$e.css( G.CSStransformName , '').css('opacity', '');
             ThumbnailAppearFinish(att.item);
           }
         });
       },
-      
+
       SCALEDOWN: function( item, delay ) {
         var f=G.tn.opt.Get('displayTransitionStartVal');
         if( f == 0 ) { f=1.3; }   // default value
-   
+
         var tweenable = new NGTweenable();
         tweenable.tween({
-          from:         { 'scale': f, 'opacity':0  },
+          from:         { 'scale': f, 'opacity':0 },
           to:           { 'scale': 1, 'opacity':1 },
-          attachment:   { item: item },
+          attachment:   { item: item, tw: tweenable },
           delay:        delay,
           duration:     G.tn.opt.Get('displayTransitionDuration'),
           easing:       { opacity: 'easeOutQuint', scale: G.tn.opt.Get('displayTransitionEasing') },
-          step: function (state, att) {
+          step:         function (state, att) {
+            if( att.item.$elt === null ) {  // the thumbnail may have been destroyed since the start of the animation
+              att.tw.stop(false);
+              return;
+            }
             att.item.$elt.last().css('opacity', state.opacity);
             att.item.CSSTransformSet('.nGY2GThumbnail', 'scale', state.scale);
             att.item.CSSTransformApply('.nGY2GThumbnail');
           },
-          finish: function (state, att) {
+          finish:       function (state, att) {
+            if( att.item.$elt === null ) { return; }
             att.item.$elt.last().css('opacity', '');
             att.item.CSSTransformSet('.nGY2GThumbnail', 'scale', state.scale);
             att.item.CSSTransformApply('.nGY2GThumbnail');
@@ -3988,50 +4354,64 @@ console.dir(delay);
           }
         });
       },
-      
+
       SLIDEUP: function( item, delay ) {
         var f=G.tn.opt.Get('displayTransitionStartVal');
         if( f == 0 ) { f=50; }   // default value
         var tweenable = new NGTweenable();
         tweenable.tween({
-          from:         { 'opacity': 0, translateY: f, 'scale': 0.8  },
-          to:           { 'opacity': 1, translateY: 0, 'scale': 1 },
-          attachment:   { item: item },
+          // from:         { 'opacity': 0, translateY: f, 'scale': 0.8  },
+          // to:           { 'opacity': 1, translateY: 0, 'scale': 1 },
+          from:         { 'opacity': 0, translateY: f },
+          to:           { 'opacity': 1, translateY: 0 },
+          attachment:   { item: item, tw: tweenable },
           delay:        delay,
           duration:     G.tn.opt.Get('displayTransitionDuration'),
-          easing:       { opacity: 'easeOutQuint', scale:'easeOutQuart', translateY:'easeOutQuart'},
-          step: function (state, att) {
+          easing:       { opacity: 'easeOutQuint', scale: 'easeOutQuart', translateY: G.tn.opt.Get('displayTransitionEasing') },
+          step:         function (state, att) {
+            if( att.item.$elt === null ) {  // the thumbnail may have been destroyed since the start of the animation
+              att.tw.stop(false);
+              return;
+            }
             att.item.$elt.css('opacity', state.opacity);
             att.item.CSSTransformSet('.nGY2GThumbnail', 'translateY', state.translateY+'px');
-            att.item.CSSTransformSet('.nGY2GThumbnail', 'scale', state.scale);
+            // att.item.CSSTransformSet('.nGY2GThumbnail', 'scale', state.scale);
             att.item.CSSTransformApply('.nGY2GThumbnail');
           },
-          finish: function (state, att) {
+          finish:       function (state, att) {
+            if( att.item.$elt === null ) { return; }
             this._step(state, att);
             att.item.$elt.css('opacity', '');
             ThumbnailAppearFinish(att.item);
           }
         });
-      }, 
-      
+      },
+
       SLIDEDOWN: function( item, delay ) {
         var f=G.tn.opt.Get('displayTransitionStartVal');
         if( f == 0 ) { f=-50; }   // default value
         var tweenable = new NGTweenable();
         tweenable.tween({
-          from:         { opacity: 0, translateY: f, scale: 0.8  },
-          to:           { opacity: 1, translateY: 0, scale: 1 },
-          attachment:   { item: item },
+          // from:         { opacity: 0, translateY: f, scale: 0.8  },
+          // to:           { opacity: 1, translateY: 0, scale: 1 },
+          from:         { opacity: 0, translateY: f },
+          to:           { opacity: 1, translateY: 0 },
+          attachment:   { item: item, tw: tweenable },
           delay:        delay,
           duration:     G.tn.opt.Get('displayTransitionDuration'),
-          easing:       { opacity: 'easeOutQuint', scale:'easeOutQuart', translateY:'easeOutQuart'},
-          step: function (state, att) {
+          easing:       { opacity: 'easeOutQuint', scale: 'easeOutQuart', translateY: G.tn.opt.Get('displayTransitionEasing') },
+          step:         function (state, att) {
+            if( att.item.$elt === null ) {  // the thumbnail may have been destroyed since the start of the animation
+              att.tw.stop(false);
+              return;
+            }
             att.item.$elt.css('opacity', state.opacity);
             att.item.CSSTransformSet('.nGY2GThumbnail', 'translateY', state.translateY+'px');
-            att.item.CSSTransformSet('.nGY2GThumbnail', 'scale', state.scale);
+            // att.item.CSSTransformSet('.nGY2GThumbnail', 'scale', state.scale);
             att.item.CSSTransformApply('.nGY2GThumbnail');
           },
-          finish: function (state, att) {
+          finish:       function (state, att) {
+            if( att.item.$elt === null ) { return; }
             this._step(state, att);
             att.item.$elt.css('opacity', '');
             ThumbnailAppearFinish(att.item);
@@ -4044,20 +4424,27 @@ console.dir(delay);
         if( f == 0 ) { f=100; }   // default value
         var tweenable = new NGTweenable();
         tweenable.tween({
-          from:         { opacity: 0, translateX: f, rotateX: 45, scale: 0.8  },
-          to:           { opacity: 1, translateX: 0, rotateX: 0, scale: 1 },
-          attachment:   { item: item },
+          // from:         { opacity: 0, translateX: f, rotateX: 45, scale: 0.8  },
+          // to:           { opacity: 1, translateX: 0, rotateX: 0, scale: 1 },
+          from:         { opacity: 0, translateX: f, rotateX: 45 },
+          to:           { opacity: 1, translateX: 0, rotateX: 0  },
+          attachment:   { item: item, tw: tweenable },
           delay:        delay,
           duration:     G.tn.opt.Get('displayTransitionDuration'),
-          easing:       { opacity: 'easeOutQuint', scale:'easeOutQuart', translateX:'easeOutQuart'},
-          step: function (state, att) {
+          easing:       { opacity: 'easeOutQuint', scale: 'easeOutQuart', translateX: G.tn.opt.Get('displayTransitionEasing') },
+          step:         function (state, att) {
+            if( att.item.$elt === null ) {  // the thumbnail may have been destroyed since the start of the animation
+              att.tw.stop(false);
+              return;
+            }
             att.item.$elt.css('opacity', state.opacity);
             att.item.CSSTransformSet('.nGY2GThumbnail', 'translateY', state.translateX+'px');
             att.item.CSSTransformSet('.nGY2GThumbnail', 'rotateX', state.rotateX+'deg');
-            att.item.CSSTransformSet('.nGY2GThumbnail', 'scale', state.scale);
+            // att.item.CSSTransformSet('.nGY2GThumbnail', 'scale', state.scale);
             att.item.CSSTransformApply('.nGY2GThumbnail');
           },
-          finish: function (state, att) {
+          finish:       function (state, att) {
+            if( att.item.$elt === null ) { return; }
             this._step(state, att);
             att.item.$elt.css('opacity', '');
             ThumbnailAppearFinish(att.item);
@@ -4066,49 +4453,63 @@ console.dir(delay);
       },
       FLIPDOWN: function( item, delay ) {
         var f=G.tn.opt.Get('displayTransitionStartVal');
-        if( f == 0 ) { f=100; }   // default value
+        if( f == 0 ) { f=-100; }   // default value
         var tweenable = new NGTweenable();
         tweenable.tween({
-          from:         { opacity: 0, translateX: f, rotateX: 60, scale: 0.8  },
-          to:           { opacity: 1, translateX: 0, rotateX: 0, scale: 1 },
-          attachment:   { item: item },
+          // from:         { opacity: 0, translateX: f, rotateX: -45, scale: 0.8  },
+          // to:           { opacity: 1, translateX: 0, rotateX: 0, scale: 1 },
+          from:         { opacity: 0, translateX: f, rotateX: -45 },
+          to:           { opacity: 1, translateX: 0, rotateX: 0 },
+          attachment:   { item: item, tw: tweenable },
           delay:        delay,
           duration:     G.tn.opt.Get('displayTransitionDuration'),
-          easing:       { opacity: 'easeOutQuint', scale:'easeOutQuart', translateX:'easeOutQuart'},
-          step: function (state, att) {
+          easing:       { opacity: 'easeOutQuint', scale:'easeOutQuart', translateX: G.tn.opt.Get('displayTransitionEasing')},
+          step:         function (state, att) {
+            if( att.item.$elt === null ) {  // the thumbnail may have been destroyed since the start of the animation
+              att.tw.stop(false);
+              return;
+            }
             att.item.$elt.css('opacity', state.opacity);
             att.item.CSSTransformSet('.nGY2GThumbnail', 'translateY', state.translateX+'px');
             att.item.CSSTransformSet('.nGY2GThumbnail', 'rotateX', state.rotateX+'deg');
-            att.item.CSSTransformSet('.nGY2GThumbnail', 'scale', state.scale);
+            // att.item.CSSTransformSet('.nGY2GThumbnail', 'scale', state.scale);
             att.item.CSSTransformApply('.nGY2GThumbnail');
           },
-          finish: function (state, att) {
+          finish:       function (state, att) {
+            if( att.item.$elt === null ) { return; }
             this._step(state, att);
             att.item.$elt.css('opacity', '');
             ThumbnailAppearFinish(att.item);
           }
         });
       },
-      
+
       SLIDEUP2: function( item, delay ) {
         var f=G.tn.opt.Get('displayTransitionStartVal');
         if( f == 0 ) { f=100; }   // default value
         var tweenable = new NGTweenable();
         tweenable.tween({
-          from:         { opacity: 0, translateY: f, rotateY: 40, scale: 0.8  },
-          to:           { opacity: 1, translateY: 0, rotateY: 0, scale: 1 },
-          attachment:   { item: item },
+          // from:         { opacity: 0, translateY: f, rotateY: 40, scale: 0.8  },
+          // to:           { opacity: 1, translateY: 0, rotateY: 0, scale: 1 },
+          from:         { opacity: 0, translateY: f, rotateY: 40 },
+          to:           { opacity: 1, translateY: 0, rotateY: 0  },
+          attachment:   { item: item, tw: tweenable },
           delay:        delay,
           duration:     G.tn.opt.Get('displayTransitionDuration'),
-          easing:       { opacity: 'easeOutQuint', scale:'easeOutQuart', translateX:'easeOutQuart'},
-          step: function (state, att) {
+          easing:       { opacity: 'easeOutQuint', scale:'easeOutQuart', translateX: G.tn.opt.Get('displayTransitionEasing') },
+          step:         function (state, att) {
+            if( att.item.$elt === null ) {  // the thumbnail may have been destroyed since the start of the animation
+              att.tw.stop(false);
+              return;
+            }
             att.item.$elt.css('opacity', state.opacity);
             att.item.CSSTransformSet('.nGY2GThumbnail', 'translateY', state.translateY+'px');
             att.item.CSSTransformSet('.nGY2GThumbnail', 'rotateY', state.rotateY+'deg');
-            att.item.CSSTransformSet('.nGY2GThumbnail', 'scale', state.scale);
+            // att.item.CSSTransformSet('.nGY2GThumbnail', 'scale', state.scale);
             att.item.CSSTransformApply('.nGY2GThumbnail');
           },
-          finish: function (state, att) {
+          finish:       function (state, att) {
+            if( att.item.$elt === null ) { return; }
             this._step(state, att);
             att.item.$elt.css('opacity', '');
             ThumbnailAppearFinish(att.item);
@@ -4120,20 +4521,26 @@ console.dir(delay);
         if( f == 0 ) { f=-100; }   // default value
         var tweenable = new NGTweenable();
         tweenable.tween({
-          from:         { opacity: 0, translateY: f, rotateY: 40, scale: 0.8  },
-          to:           { opacity: 1, translateY: 0, rotateY: 0, scale: 1 },
-          attachment:   { item: item },
+          // from:         { opacity: 0, translateY: f, rotateY: 40, scale: 0.8  },
+          // to:           { opacity: 1, translateY: 0, rotateY: 0, scale: 1 },
+          from:         { opacity: 0, translateY: f, rotateY: 40 },
+          to:           { opacity: 1, translateY: 0, rotateY: 0  },
+          attachment:   { item: item, tw: tweenable },
           delay:        delay,
           duration:     G.tn.opt.Get('displayTransitionDuration'),
-          easing:       { opacity: 'easeOutQuint', scale:'easeOutQuart', translateY:'easeOutQuart'},
-          step: function (state, att) {
+          easing:       { opacity: 'easeOutQuint', scale: 'easeOutQuart', translateY: G.tn.opt.Get('displayTransitionEasing') },
+          step:         function (state, att) {
+            if( att.item.$elt === null ) {  // the thumbnail may have been destroyed since the start of the animation
+              att.tw.stop(false);
+              return;
+            }
             att.item.$elt.css('opacity', state.opacity);
             att.item.CSSTransformSet('.nGY2GThumbnail', 'translateY', state.translateY+'px');
             att.item.CSSTransformSet('.nGY2GThumbnail', 'rotateY', state.rotateY+'deg');
-            att.item.CSSTransformSet('.nGY2GThumbnail', 'scale', state.scale);
+            // att.item.CSSTransformSet('.nGY2GThumbnail', 'scale', state.scale);
             att.item.CSSTransformApply('.nGY2GThumbnail');
           },
-          finish: function (state, att) {
+          finish:       function (state, att) {
             this._step(state, att);
             att.item.$elt.css('opacity', '');
             att.item.CSSTransformApply('.nGY2GThumbnail');
@@ -4148,17 +4555,22 @@ console.dir(delay);
         tweenable.tween({
           from:         { opacity: 0, translateX: f, rotateZ: 10 },
           to:           { opacity: 1, translateX: 0, rotateZ: 0 },
-          attachment:   { item: item },
+          attachment:   { item: item, tw: tweenable },
           delay:        delay,
           duration:     G.tn.opt.Get('displayTransitionDuration'),
-          easing:       { opacity: 'easeOutQuint', translateX:'easeOutQuart', rotateZ:'easeOutQuart'},
-          step: function (state, att) {
+          easing:       { opacity: 'easeOutQuint', translateX: G.tn.opt.Get('displayTransitionEasing'), rotateZ:'easeOutQuart'},
+          step:         function (state, att) {
+            if( att.item.$elt === null ) {  // the thumbnail may have been destroyed since the start of the animation
+              att.tw.stop(false);
+              return;
+            }
             att.item.$elt.css('opacity', state.opacity);
             att.item.CSSTransformSet('.nGY2GThumbnail', 'translateX', state.translateX+'px');
             att.item.CSSTransformSet('.nGY2GThumbnail', 'rotateZ', state.rotateZ+'deg');
             att.item.CSSTransformApply('.nGY2GThumbnail');
           },
-          finish: function (state, att) {
+          finish:       function (state, att) {
+            if( att.item.$elt === null ) { return; }
             this._step(state, att);
             att.item.$elt.css('opacity', '');
             ThumbnailAppearFinish(att.item);
@@ -4172,17 +4584,22 @@ console.dir(delay);
         tweenable.tween({
           from:         { opacity: 0, translateX: f, rotateZ: -10 },
           to:           { opacity: 1, translateX: 0, rotateZ: 0 },
-          attachment:   { item: item },
+          attachment:   { item: item, tw: tweenable },
           delay:        delay,
           duration:     G.tn.opt.Get('displayTransitionDuration'),
-          easing:       { opacity: 'easeOutQuint', translateX:'easeOutQuart', rotateZ:'easeOutQuart'},
-          step: function (state, att) {
+          easing:       { opacity: 'easeOutQuint', translateX: G.tn.opt.Get('displayTransitionEasing'), rotateZ:'easeOutQuart'},
+          step:         function (state, att) {
+            if( att.item.$elt === null ) {  // the thumbnail may have been destroyed since the start of the animation
+              att.tw.stop(false);
+              return;
+            }
             att.item.$elt.css('opacity', state.opacity);
             att.item.CSSTransformSet('.nGY2GThumbnail', 'translateX', state.translateX+'px');
             att.item.CSSTransformSet('.nGY2GThumbnail', 'rotateZ', state.rotateZ+'deg');
             att.item.CSSTransformApply('.nGY2GThumbnail');
           },
-          finish: function (state, att) {
+          finish:       function (state, att) {
+            if( att.item.$elt === null ) { return; }
             this._step(state, att);
             att.item.$elt.css('opacity', '');
             ThumbnailAppearFinish(att.item);
@@ -4195,14 +4612,19 @@ console.dir(delay);
         tweenable.tween({
           from:         { 'opacity': 0 },
           to:           { 'opacity': 1 },
-          attachment:   { $e:item.$elt, item: item },
+          attachment:   { $e:item.$elt, item: item, tw: tweenable },
           delay:        delay,
           duration:     G.tn.opt.Get('displayTransitionDuration'),
           easing:       'easeInOutSine',
-          step: function (state, att) {
+          step:         function (state, att) {
+            if( att.item.$elt === null ) {  // the thumbnail may have been destroyed since the start of the animation
+              att.tw.stop(false);
+              return;
+            }
             att.$e.css(state);
           },
-          finish: function (state, att) {
+          finish:       function (state, att) {
+            if( att.item.$elt === null ) { return; }
             att.$e.css('opacity', '');
             // att.$e.css({'opacity':1 });
             ThumbnailAppearFinish(att.item);
@@ -4212,6 +4634,49 @@ console.dir(delay);
     }
 
 
+
+    // ######################################
+    // Gallery display animation
+
+    function GalleryAppear() {
+
+      // G.$E.conTnParent.css({ opacity: 1 });
+
+      var d=G.galleryDisplayTransitionDuration.Get();
+      switch( G.galleryDisplayTransition.Get() ){
+        case 'ROTATEX':
+          G.$E.base.css({ perspective: '1000px', 'perspective-origin': '50% 0%' });
+          var tweenable = new NGTweenable();
+          tweenable.tween({
+            from:         { rotate: 50 },
+            to:           { rotate: 0  },
+            duration:     d,
+            easing:       'easeOutCirc',
+            step:         function (state, att) {
+              G.$E.conTnParent.css( G.CSStransformName , 'rotateX('+state.rotate+'deg)');
+            }
+          });
+          break;
+        case 'SLIDEUP':
+          var tweenable = new NGTweenable();
+          tweenable.tween({
+            from:         { y: 200 },
+            to:           { y: 0  },
+            duration:     d,
+            easing:       'easeOutCirc',
+            step:         function (state, att) {
+              G.$E.conTnParent.css( G.CSStransformName , 'translateY('+state.y+'px)');
+            }
+          });
+          break;
+        case 'NONE':
+        default:
+          break;
+      }
+
+
+    }
+
     // ######################################
     // ##### THUMBNAIL HOVER MANAGEMENT #####
     // ######################################
@@ -4220,22 +4685,26 @@ console.dir(delay);
       // Over init in 2 step:
       // 1) init with thumbnailBuildInit2 parameter
       // 2) init with the hover effect parameter
-      
-      
+
+
       var curTn=G.GOM.items[GOMidx];
       var item=G.I[curTn.thumbnailIdx];
 
       if( item.$elt == null ) { return; } // zombie
-      
-      if( typeof G.O.fnThumbnailHoverInit == 'function' ) {
-        // G.O.fnThumbnailHoverInit($e, item, ExposedObjects() );
-        G.O.fnThumbnailHoverInit($e, item, GOMidx );
+
+      if( G.O.fnThumbnailHoverInit !== null ) {
+        if( typeof G.O.fnThumbnailHoverInit == 'function' ) {
+          G.O.fnThumbnailHoverInit($e, item, GOMidx);
+        }
+        else {
+          // defined in markup
+          window[G.O.fnThumbnailHoverInit]($e, item, GOMidx);
+        }
       }
 
-      // build init
+      // build initialization
       var inits=G.tn.buildInit.get();
       for( var j=0; j<inits.length; j++) {
-      
         switch( inits[j].property ) {
           case 'scale':
           case 'rotateX':
@@ -4263,7 +4732,7 @@ console.dir(delay);
             break;
         }
       }
-      
+
       // hover
       var effects=G.tn.hoverEffects.get();
       for( var j=0; j<effects.length; j++) {
@@ -4293,7 +4762,7 @@ console.dir(delay);
               var $t=item.$getElt(effects[j].element);
               $t.css( effects[j].type, effects[j].from );
               break;
-              
+
           }
         }
       }
@@ -4305,6 +4774,8 @@ console.dir(delay);
       var l=G.GOM.items.length;
       for( var i=0; i < l ; i++ ) {
         ThumbnailOverInit(i);
+        // G.GOM.items[i].hovered=false;
+        G.I[G.GOM.items[i].thumbnailIdx].hovered=false;
       }
     }
 
@@ -4319,10 +4790,15 @@ console.dir(delay);
 
       item.hovered=true;
 
-      if( typeof G.O.fnThumbnailHover == 'function' ) { 
-        // G.O.fnThumbnailHover($e, item, ExposedObjects());
-        G.O.fnThumbnailHover(item.$elt, item, GOMidx);
-      }    
+      if( G.O.fnThumbnailHover !== null ) {
+        if( typeof G.O.fnThumbnailHover == 'function' ) {
+          G.O.fnThumbnailHover(item.$elt, item, GOMidx);
+        }
+        else {
+          // defined in markup
+          window[G.O.fnThumbnailHover](item.$elt, item, GOMidx);
+        }
+      }
       var effects=G.tn.hoverEffects.get();
 
       try {
@@ -4335,7 +4811,7 @@ console.dir(delay);
         // effects on whole layout
         // GalleryResize( GOMidx );
       }
-      catch (e) { 
+      catch (e) {
         NanoAlert(G, 'error on hover: ' +e.message );
       }
 
@@ -4349,25 +4825,29 @@ console.dir(delay);
           ThumbnailHoverOut(i);
         }
         else {
-          G.GOM.items[i].hovered=false;
+          G.I[G.GOM.items[i].thumbnailIdx].hovered
         }
       }
     }
 
-    
+
     function ThumbnailHoverOut( GOMidx ) {
       if( G.GOM.albumIdx == -1 || !G.galleryResizeEventEnabled ) { return; };
       var curTn=G.GOM.items[GOMidx];
       var item=G.I[curTn.thumbnailIdx];
       if( item.kind == 'albumUp' || !item.hovered ) { return; }
+      item.hovered=false;
       if( item.$elt == null ) { return; }
 
-      item.hovered=false;
-
-      if( typeof G.O.fnThumbnailHoverOut == 'function' ) { 
-        // G.O.fnThumbnailHoverOut($e, item, ExposedObjects());
-        G.O.fnThumbnailHoverOut(item.$elt, item, GOMidx);
-      }    
+      if( G.O.fnThumbnailHoverOut !== null ) {
+        if( typeof G.O.fnThumbnailHoverOut == 'function' ) {
+          G.O.fnThumbnailHoverOut(item.$elt, item, GOMidx);
+        }
+        else {
+          // defined in markup
+          window[G.O.fnThumbnailHoverOut](item.$elt, item, GOMidx);
+        }
+      }
 
       var effects=G.tn.hoverEffects.get();
       try {
@@ -4380,30 +4860,28 @@ console.dir(delay);
         // effects on whole layout
         // GalleryResize( );
       }
-      catch (e) { 
+      catch (e) {
         NanoAlert(G, 'error on hoverOut: ' +e.message );
       }
-      
+
     }
-    
+
 
     /** @function DisplayPhoto */
     function DisplayPhoto( imageID, albumID ) {
-console.log('#DisplayPhoto : '+  albumID +'-'+ imageID);
+
+      if( G.O.debugMode ) { console.log('#DisplayPhoto : '+  albumID +'-'+ imageID); }
       var albumIdx=NGY2Item.GetIdx(G, albumID);
-      // if( albumIdx == 0 || albumIdx == -1 ) {
       if( albumIdx == 0 ) {
         G.GOM.curNavLevel='l1';
       }
       else {
         G.GOM.curNavLevel='lN';
       }
-      
+
       if( albumIdx == -1 ) {
         // get content of album on root level
         NGY2Item.New( G, '', '', albumID, '0', 'album' );    // create empty album
-        // AlbumGetContent( '0', DisplayPhoto, imageID, albumID );
-        // return;
         albumIdx=G.I.length-1;
       }
 
@@ -4413,20 +4891,20 @@ console.log('#DisplayPhoto : '+  albumID +'-'+ imageID);
         AlbumGetContent( albumID, DisplayPhoto, imageID, albumID );
         return;
       }
-console.log('#DisplayPhoto : '+  imageIdx);
-     
+
+      if( G.O.debugMode ) { console.log('#DisplayPhoto : '+  imageIdx); }
+
       DisplayPhotoIdx(imageIdx);
-    
+
     }
 
 
-    // BETA -> NOT finished
+    // BETA -> NOT finished and not used at this time
     // Retrieve the title+description of ONE album
     function albumGetInfo( albumIdx, fnToCall ) {
-      var url='';
-      var kind='image';
-      //var albumIdx=NGY2Item.GetIdx(G, ID);
-      
+      var url =   '';
+      var kind =  'image';
+
       switch( G.O.kind ) {
         case 'json':
           // TODO
@@ -4442,7 +4920,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
 
       jQuery.ajaxSetup({ cache: false });
       jQuery.support.cors = true;
-      
+
       var tId = setTimeout( function() {
         // workaround to handle JSONP (cross-domain) errors
         //PreloaderHide();
@@ -4451,7 +4929,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
       jQuery.getJSON(url, function(data, status, xhr) {
         clearTimeout(tId);
         //PreloaderHide();
-        
+
         fnToCall( G.I[albumIdx].GetID() );
 
       })
@@ -4460,18 +4938,18 @@ console.log('#DisplayPhoto : '+  imageIdx);
         //PreloaderHide();
         var err = textStatus + ', ' + error;
         NanoAlert('Could not retrieve ajax data: ' + err);
-      });      
-    
+      });
+
     }
 
-    
+
     // function AlbumGetContent( albumIdx, fnToCall ) {
     function AlbumGetContent( albumID, fnToCall, fnParam1, fnParam2 ) {
       var url='';
       var kind='image';
       var albumIdx=NGY2Item.GetIdx(G, albumID);
       // var photoIdx=NGY2Item.GetIdx(G, photoID);
-      
+
       switch( G.O.kind ) {
         // MARKUP / API
         case '':
@@ -4481,12 +4959,12 @@ console.log('#DisplayPhoto : '+  imageIdx);
         default:
           jQuery.nanogallery2['data_'+G.O.kind](G, 'AlbumGetContent', albumID, fnToCall, fnParam1, fnParam2 );
       }
-      
+
     }
-    
-    
+
+
     function AlbumGetMarkupOrApi ( fnToCall, fnParam1, fnParam2 ) {
-    
+
       if( G.O.items !== undefined && G.O.items !== null ) {
         // data defined as an object in an option parameter
         GetContentApiObject();
@@ -4507,7 +4985,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
         fnToCall( fnParam1, fnParam2, null );
       }
     }
-    
+
     function StartsWithProtocol ( path ) {
       path=path.toLowerCase();
       switch( path ) {
@@ -4519,18 +4997,18 @@ console.log('#DisplayPhoto : '+  imageIdx);
       }
       return false;
     }
-    
+
     function GetContentApiObject() {
       var foundAlbumID=false;
-      
+
       G.I[0].contentIsLoaded=true;
 
       jQuery.each(G.O.items, function(i,item){
-        
+
         var title='';
         title=GetI18nItem(item,'title');
         if( title === undefined ) { title=''; }
-        
+
         var src='';
         if( item['src'+RetrieveCurWidth().toUpperCase()] !== undefined ) {
           src+=item['src'+RetrieveCurWidth().toUpperCase()];
@@ -4552,7 +5030,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
         if( !StartsWithProtocol(thumbsrc) ) {
           thumbsrc=G.O.itemsBaseURL + thumbsrc;
         }
-        
+
         var thumbsrcX2='';
         if( item.srct2x !== undefined && item.srct2x.length>0 ) {
           thumbsrcX2=item.srct2x;
@@ -4596,22 +5074,31 @@ console.log('#DisplayPhoto : '+  imageIdx);
         if( item.kind !== undefined && item.kind.length>0 ) {
           kind=item.kind;
         }
-        
+
         var newItem=NGY2Item.New( G, title, description, ID, albumID, kind, tags );
 
         // image source url
         newItem.src=src;
-        
+
+        // dominant colors (needs to be a base64 gif)
+        if( item.imageDominantColors !== undefined ) {
+          newItem.imageDominantColors=item.imageDominantColors;
+        }
+        // dominant color (rgb hex)
+        if( item.imageDominantColor !== undefined ) {
+          newItem.imageDominantColor=item.imageDominantColor;
+        }
+
         // dest url
         if( item.destURL !== undefined && item.destURL.length>0 ) {
           newItem.destinationURL=item.destURL;
         }
-        
+
         // download image url
         if( item.downloadURL !== undefined && item.downloadURL.length>0 ) {
           newItem.downloadURL=item.downloadURL;
         }
-        
+
         // thumbnail image size
         var tw=0;
         if( item.imgtWidth !== undefined && item.imgtWidth>0 ) {
@@ -4625,16 +5112,16 @@ console.log('#DisplayPhoto : '+  imageIdx);
         }
 
         newItem.thumbs = {
-          url: { l1 : { xs:thumbsrc, sm:thumbsrc, me:thumbsrc, la:thumbsrc, xl:thumbsrc }, lN : { xs:thumbsrc, sm:thumbsrc, me:thumbsrc, la:thumbsrc, xl:thumbsrc } },
-          width: { l1 : { xs:tw, sm:tw, me:tw, la:tw, xl:tw }, lN : { xs:tw, sm:tw, me:tw, la:tw, xl:tw } },
+          url:    { l1 : { xs:thumbsrc, sm:thumbsrc, me:thumbsrc, la:thumbsrc, xl:thumbsrc }, lN : { xs:thumbsrc, sm:thumbsrc, me:thumbsrc, la:thumbsrc, xl:thumbsrc } },
+          width:  { l1 : { xs:tw, sm:tw, me:tw, la:tw, xl:tw }, lN : { xs:tw, sm:tw, me:tw, la:tw, xl:tw } },
           height: { l1 : { xs:th, sm:th, me:th, la:th, xl:th }, lN : { xs:th, sm:th, me:th, la:th, xl:th } }
         };
 
         // image size
         if( item.imageWidth !== undefined ) { newItem.imageWidth=item.width; }
         if( item.imageHeight !== undefined ) { newItem.imageHeight=item.height; }
-        
-        
+
+
         // Exif - model
         if( item.exifModel !== undefined ) { newItem.exif.model=item.exifModel; }
         // Exif - flash
@@ -4651,30 +5138,36 @@ console.log('#DisplayPhoto : '+  imageIdx);
         if( item.exifTime !== undefined ) { newItem.exif.time=item.exifTime; }
         // Exif - location
         if( item.exifLocation !== undefined ) { newItem.exif.exifLocation=item.exifTime; }
-        
-        
+
+
         // custom data
         if( item.customData !== null ) {
           newItem.customData=cloneJSObject(item.customData);
         }
 
         newItem.contentIsLoaded=true;
-        
-        if( typeof G.O.fnProcessData == 'function' ) {
-          G.O.fnProcessData(newItem, 'api', item);
+
+        if( G.O.fnProcessData !== null ) {
+          if( typeof G.O.fnProcessData == 'function' ) {
+            G.O.fnProcessData(newItem, 'api', item);
+          }
+          else {
+            // defined in markup
+            window[G.O.fnProcessData](newItem, 'api', item);
+          }
         }
       });
-      
+
       if( foundAlbumID ) {
         //G.O.displayBreadcrumb=true;
       }
 
     }
-    
+
     function GetContentMarkup( $elements ) {
       var foundAlbumID=false;
       var nbTitles=0;
-      
+
       G.I[0].contentIsLoaded=true;
 
       jQuery.each($elements, function(i, item){
@@ -4682,23 +5175,25 @@ console.log('#DisplayPhoto : '+  imageIdx);
         // create dictionnary with all data attribute name in lowercase (to be case unsensitive)
         var data={
           // some default values
-          'data-ngdesc':            '',         // item description
-          'data-ngid':              null,       // ID
-          'data-ngkind':            'image',    // kind (image, album, albumup)
-          'data-ngtags':            null,       // tags
-          'data-ngdest':            '',         // destination URL
-          'data-ngthumbimgwidth':   0,          // thumbnail width
-          'data-ngthumbimgheight':  0,          // thumbnail height
-          'data-ngimagewidth':      0,          // image width
-          'data-ngimageheight':     0,          // image height
-          'data-ngexifmodel':       '',         // EXIF data
-          'data-ngexifflash':       '',
-          'data-ngexiffocallength': '',
-          'data-ngexiffstop':       '',
-          'data-ngexifexposure':    '',
-          'data-ngexifiso':         '',
-          'data-ngexiftime':        '',
-          'data-ngexiflocation':    ''
+          'data-ngdesc':                  '',         // item description
+          'data-ngid':                    null,       // ID
+          'data-ngkind':                  'image',    // kind (image, album, albumup)
+          'data-ngtags':                  null,       // tags
+          'data-ngdest':                  '',         // destination URL
+          'data-ngthumbimgwidth':         0,          // thumbnail width
+          'data-ngthumbimgheight':        0,          // thumbnail height
+          'data-ngimagewidth':            0,          // image width
+          'data-ngimageheight':           0,          // image height
+          'data-ngimagedominantcolors':   null,       // image dominant colors
+          'data-ngimagedominantcolor':    null,       // image dominant colors
+          'data-ngexifmodel':             '',         // EXIF data
+          'data-ngexifflash':             '',
+          'data-ngexiffocallength':       '',
+          'data-ngexiffstop':             '',
+          'data-ngexifexposure':          '',
+          'data-ngexifiso':               '',
+          'data-ngexiftime':              '',
+          'data-ngexiflocation':          ''
         };
         [].forEach.call( item.attributes, function(attr) {
           data[attr.name.toLowerCase()]=attr.value;
@@ -4731,7 +5226,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
         if( !StartsWithProtocol(src) ) {
           src=G.O.itemsBaseURL + src;
         }
-        
+
         //newObj.description=jQuery(item).attr('data-ngdesc');
         var description=data['data-ngdesc'];
         var ID=data['data-ngid'];
@@ -4743,7 +5238,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
           albumID=data['data-ngalbumid'];
           foundAlbumID=true;
         }
-        
+
         var title=jQuery(item).text();
         if( !(G.O.thumbnailLabel.get('title') == '' || G.O.thumbnailLabel.get('title') == undefined) ) {
           title=GetImageTitle(src);
@@ -4757,7 +5252,12 @@ console.log('#DisplayPhoto : '+  imageIdx);
 
         // image source url
         newItem.src=src;
-        
+
+        // dominant colorS (needs to be a base64 gif)
+        newItem.imageDominantColors=data['data-ngimagedominantcolors'];
+        // dominant color (rgb hex)
+        newItem.imageDominantColor=data['data-ngimagedominantcolors'];
+
         newItem.destinationURL=data['data-ngdest'];
         newItem.downloadURL=data['data-ngdownloadurl'];
 
@@ -4765,8 +5265,8 @@ console.log('#DisplayPhoto : '+  imageIdx);
         var tw=parseInt(data['data-ngthumbimgwidth']);
         var th=parseInt(data['data-ngthumbimgheight']);
         newItem.thumbs = {
-          url: { l1 : { xs:thumbsrc, sm:thumbsrc, me:thumbsrc, la:thumbsrc, xl:thumbsrc }, lN : { xs:thumbsrc, sm:thumbsrc, me:thumbsrc, la:thumbsrc, xl:thumbsrc } },
-          width: { l1 : { xs:tw, sm:tw, me:tw, la:tw, xl:tw }, lN : { xs:tw, sm:tw, me:tw, la:tw, xl:tw } },
+          url:    { l1 : { xs:thumbsrc, sm:thumbsrc, me:thumbsrc, la:thumbsrc, xl:thumbsrc }, lN : { xs:thumbsrc, sm:thumbsrc, me:thumbsrc, la:thumbsrc, xl:thumbsrc } },
+          width:  { l1 : { xs:tw, sm:tw, me:tw, la:tw, xl:tw }, lN : { xs:tw, sm:tw, me:tw, la:tw, xl:tw } },
           height: { l1 : { xs:th, sm:th, me:th, la:th, xl:th }, lN : { xs:th, sm:th, me:th, la:th, xl:th } }
         };
 
@@ -4790,7 +5290,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
         newItem.exif.time=data['data-ngexiftime'];
         // Exif - location
         newItem.exif.location=data['data-ngexiflocation'];
-        
+
         newItem.contentIsLoaded=true;
 
         // custom data
@@ -4802,16 +5302,22 @@ console.log('#DisplayPhoto : '+  imageIdx);
           newItem.customData=cloneJSObject(jQuery(item).data('ngcustomdata'));
         }
 
-        if( typeof G.O.fnProcessData == 'function' ) {
-          G.O.fnProcessData(newItem, 'markup', item);
-        }        
-        
+        if( G.O.fnProcessData !== null ) {
+          if( typeof G.O.fnProcessData == 'function' ) {
+            G.O.fnProcessData(newItem, 'markup', item);
+          }
+          else {
+            // defined in markup
+            window[G.O.fnProcessData](newItem, 'markup', item);
+          }
+        }
+
       });
-      
+
       if( foundAlbumID ) {
         //G.O.displayBreadcrumb=true;
       }
-      
+
       if( nbTitles == 0 ) {
         G.O.thumbnailLabel.display=false;
       }
@@ -4830,14 +5336,14 @@ console.log('#DisplayPhoto : '+  imageIdx);
       return temp;
     }
 
-    
-    
-    
+
+
+
     // ################################
     // ##### DEFINE VARIABLES     #####
     // ################################
 
-    
+
     /** @function DefineVariables */
     function DefineVariables() {
 
@@ -4848,7 +5354,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
       if( G.O.kind.toUpperCase() == 'GOOGLE' ) {
         G.O.kind='google2';
       }
-    
+
       // management of screen width
       G.GOM.curWidth=RetrieveCurWidth();
 
@@ -4865,7 +5371,6 @@ console.log('#DisplayPhoto : '+  imageIdx);
       G.tn.toolbar.album.bottomRight=G.tn.toolbar.album.bottomRight.toUpperCase();
 
       // thumbnails label - level dependant settings
-//TODO --> following must be moved to G.tn
       G.O.thumbnailLabel.get = function( opt ) {
         if( G.GOM.curNavLevel == 'l1' && G.O.thumbnailL1Label !== undefined && G.O.thumbnailL1Label[opt] !== undefined ) {
           return G.O.thumbnailL1Label[opt];
@@ -4911,160 +5416,103 @@ console.log('#DisplayPhoto : '+  imageIdx);
       if( G.albumListHidden.length > 0 ) {
         G.O.locationHash=false;   // disable hash location for hidden/privat albums --> combination is impossible
       }
-      
-      
+
+
       // thumbnail image crop
-      if( typeof G.O.thumbnailCrop == 'boolean' ) {
-        G.tn.opt.lN.crop=G.O.thumbnailCrop;
-        G.tn.opt.l1.crop=G.O.thumbnailCrop;
-      }
-      if( G.O.thumbnailL1Crop !== undefined &&  G.O.thumbnailL1Crop != null && G.O.thumbnailL1Crop != '' ) {
+      G.tn.opt.lN.crop=G.O.thumbnailCrop;
+      G.tn.opt.l1.crop=G.O.thumbnailCrop;
+      if( G.O.thumbnailL1Crop != null ) {
         G.tn.opt.l1.crop=G.O.thumbnailL1Crop;
       }
 
+
+
+      function ThumbnailOpt( lN, l1, opt) {
+        G.tn.opt.lN[opt]=G.O[lN];
+        G.tn.opt.l1[opt]=G.O[lN];
+        if( toType(G.O[l1]) == 'number' ) {
+          G.tn.opt.l1[opt]=G.O[l1];
+        }
+      }
       // thumbnail stacks
-      if( toType(G.O.thumbnailStacks) == 'number' && G.O.thumbnailStacks > 0 ) {
-        G.tn.opt.lN.stacks=G.O.thumbnailStacks;
-        G.tn.opt.l1.stacks=G.O.thumbnailStacks;
-      }
-      if( toType(G.O.thumbnailL1Stacks) == 'number' && G.O.thumbnailL1Stacks > 0 ) {
-        G.tn.opt.l1.stacks=G.O.thumbnailL1Stacks;
-      }
+      ThumbnailOpt('thumbnailStacks', 'thumbnailL1Stacks', 'stacks');
       // thumbnail stacks translate X
-      if( toType(G.O.thumbnailStacksTranslateX) == 'number' ) {
-        G.tn.opt.lN.stacksTranslateX=G.O.thumbnailStacksTranslateX;
-        G.tn.opt.l1.stacksTranslateX=G.O.thumbnailStacksTranslateX;
-      }
-      if( toType(G.O.thumbnailL1StacksTranslateX) == 'number' ) {
-        G.tn.opt.l1.stacksTranslateX=G.O.thumbnailL1StacksTranslateX;
-      }
+      ThumbnailOpt('thumbnailStacksTranslateX', 'thumbnailL1StacksTranslateX', 'stacksTranslateX');
       // thumbnail stacks translate Y
-      if( toType(G.O.thumbnailStacksTranslateY) == 'number' ) {
-        G.tn.opt.lN.stacksTranslateY=G.O.thumbnailStacksTranslateY;
-        G.tn.opt.l1.stacksTranslateY=G.O.thumbnailStacksTranslateY;
-      }
-      if( toType(G.O.thumbnailL1StacksTranslateY) == 'number'  ) {
-        G.tn.opt.l1.stacksTranslateY=G.O.thumbnailL1StacksTranslateY;
-      }
+      ThumbnailOpt('thumbnailStacksTranslateY', 'thumbnailL1StacksTranslateY', 'stacksTranslateY');
       // thumbnail stacks translate Z
-      if( toType(G.O.thumbnailStacksTranslateZ) == 'number' ) {
-        G.tn.opt.lN.stacksTranslateZ=G.O.thumbnailStacksTranslateZ;
-        G.tn.opt.l1.stacksTranslateZ=G.O.thumbnailStacksTranslateZ;
-      }
-      if( toType(G.O.thumbnailL1StacksTranslateZ) == 'number'  ) {
-        G.tn.opt.l1.stacksTranslateZ=G.O.thumbnailL1StacksTranslateZ;
-      }
+      ThumbnailOpt('thumbnailStacksTranslateZ', 'thumbnailL1StacksTranslateZ', 'stacksTranslateZ');
       // thumbnail stacks rotate X
-      if( toType(G.O.thumbnailStacksRotateX) == 'number'  ) {
-        G.tn.opt.lN.stacksRotateX=G.O.thumbnailStacksRotateX;
-        G.tn.opt.l1.stacksRotateX=G.O.thumbnailStacksRotateX;
-      }
-      if( toType(G.O.thumbnailL1StacksRotateX) == 'number' ) {
-        G.tn.opt.l1.stacksRotateX=G.O.thumbnailL1StacksRotateX;
-      }
+      ThumbnailOpt('thumbnailStacksRotateX', 'thumbnailL1StacksRotateX', 'stacksRotateX');
       // thumbnail stacks rotate Y
-      if( toType(G.O.thumbnailStacksRotateY) == 'number' ) {
-        G.tn.opt.lN.stacksRotateY=G.O.thumbnailStacksRotateY;
-        G.tn.opt.l1.stacksRotateY=G.O.thumbnailStacksRotateY;
-      }
-      if( toType(G.O.thumbnailL1StacksRotateY) == 'number' ) {
-        G.tn.opt.l1.stacksRotateY=G.O.thumbnailL1StacksRotateY;
-      }
+      ThumbnailOpt('thumbnailStacksRotateY', 'thumbnailL1StacksRotateY', 'stacksRotateY');
       // thumbnail stacks rotate Z
-      if( toType(G.O.thumbnailStacksRotateZ) == 'number' ) {
-        G.tn.opt.lN.stacksRotateZ=G.O.thumbnailStacksRotateZ;
-        G.tn.opt.l1.stacksRotateZ=G.O.thumbnailStacksRotateZ;
-      }
-      if( toType(G.O.thumbnailL1StacksRotateZ) == 'number' ) {
-        G.tn.opt.l1.stacksRotateZ=G.O.thumbnailL1StacksRotateZ;
-      }
+      ThumbnailOpt('thumbnailStacksRotateZ', 'thumbnailL1StacksRotateZ', 'stacksRotateZ');
       // thumbnail stacks scale
-      if( toType(G.O.thumbnailStacksScale) == 'number' ) {
-        G.tn.opt.lN.stacksScale=G.O.thumbnailStacksScale;
-        G.tn.opt.l1.stacksScale=G.O.thumbnailStacksScale;
-      }
-      if( toType(G.O.thumbnailL1StacksScale) == 'number' ) {
-        G.tn.opt.l1.stacksScale=G.O.thumbnailL1StacksScale;
-      }
-      
+      ThumbnailOpt('thumbnailStacksScale', 'thumbnailL1StacksScale', 'stacksScale');
       // thumbnail gutter width
-      if( toType(G.O.thumbnailGutterWidth) == 'number' && G.O.thumbnailGutterWidth > 0 ) {
-        G.tn.opt.lN.gutterWidth=G.O.thumbnailGutterWidth;
-        G.tn.opt.l1.gutterWidth=G.O.thumbnailGutterWidth;
-      }
-      if( toType(G.O.thumbnailL1GutterWidth) == 'number' && G.O.thumbnailL1GutterWidth > 0 ) {
-        G.tn.opt.l1.gutterWidth=G.O.thumbnailL1GutterWidth;
-      }
-      
+      ThumbnailOpt('thumbnailGutterWidth', 'thumbnailL1GutterWidth', 'gutterWidth');
       // thumbnail gutter height
-      if( toType(G.O.thumbnailGutterHeight) == 'number' && G.O.thumbnailGutterHeight > 0 ) {
-        G.tn.opt.lN.gutterHeight=G.O.thumbnailGutterHeight;
-        G.tn.opt.l1.gutterHeight=G.O.thumbnailGutterHeight;
-      }
-      if( toType(G.O.thumbnailL1GutterHeight) == 'number' && G.O.thumbnailL1GutterHeight > 0 ) {
-        G.tn.opt.l1.gutterHeight=G.O.thumbnailL1GutterHeight;
-      }
-      
+      ThumbnailOpt('thumbnailGutterHeight', 'thumbnailL1GutterHeight', 'gutterHeight');
+
       // gallery display mode
-      if( G.O.galleryDisplayMode !== undefined && G.O.galleryDisplayMode != '' ) {
-        G.galleryDisplayMode.lN=G.O.galleryDisplayMode.toUpperCase();
-        G.galleryDisplayMode.l1=G.O.galleryDisplayMode.toUpperCase();
-      }
-      if( G.O.galleryL1DisplayMode !== undefined &&  G.O.galleryL1DisplayMode != null && G.O.galleryL1DisplayMode != '' ) {
+      G.galleryDisplayMode.lN=G.O.galleryDisplayMode.toUpperCase();
+      G.galleryDisplayMode.l1=G.O.galleryDisplayMode.toUpperCase();
+      if( G.O.galleryL1DisplayMode != null ) {
         G.galleryDisplayMode.l1=G.O.galleryL1DisplayMode.toUpperCase();
       }
-      
+
       // gallery maximum number of lines of thumbnails
-      if( toType(G.O.galleryMaxRows) == 'number' && G.O.galleryMaxRows >= 0 ) {
-        G.galleryMaxRows.lN=G.O.galleryMaxRows;
-        G.galleryMaxRows.l1=G.O.galleryMaxRows;
-      }
-      else {
-        NanoConsoleLog(G, 'Parameter "galleryMaxRows" must be an integer.');
-      }
-      if( toType(G.O.galleryL1MaxRows) == 'number' && G.O.galleryL1MaxRows >= 0 ) {
+      G.galleryMaxRows.lN=G.O.galleryMaxRows;
+      G.galleryMaxRows.l1=G.O.galleryMaxRows;
+      if( toType(G.O.galleryL1MaxRows) == 'number' ) {
         G.galleryMaxRows.l1=G.O.galleryL1MaxRows;
       }
 
       // gallery last row full
-      if( G.O.galleryLastRowFull !== undefined && G.O.galleryLastRowFull != null ) {
-        G.galleryLastRowFull.lN=G.O.galleryLastRowFull;
-        G.galleryLastRowFull.l1=G.O.galleryLastRowFull;
-      }
-      if( G.O.galleryL1LastRowFull !== undefined && G.O.galleryL1LastRowFull != null ) {
+      G.galleryLastRowFull.lN=G.O.galleryLastRowFull;
+      G.galleryLastRowFull.l1=G.O.galleryLastRowFull;
+      if( G.O.galleryL1LastRowFull != null ) {
         G.galleryLastRowFull.l1=G.O.galleryL1LastRowFull;
       }
-      
+
       // gallery sorting
-      if( G.O.gallerySorting !== undefined && G.O.gallerySorting != null ) {
-        G.gallerySorting.lN=G.O.gallerySorting.toUpperCase();
-        G.gallerySorting.l1=G.gallerySorting.lN;
-      }
-      if( G.O.galleryL1Sorting !== undefined && G.O.galleryL1Sorting != null ) {
+      G.gallerySorting.lN=G.O.gallerySorting.toUpperCase();
+      G.gallerySorting.l1=G.gallerySorting.lN;
+      if( G.O.galleryL1Sorting != null ) {
         G.gallerySorting.l1=G.O.galleryL1Sorting.toUpperCase();
       }
-      
-      // gallery max items per album (not for inline/api defined items)
-      if( toType(G.O.galleryMaxItems) == 'number' && G.O.galleryMaxItems >= 0 ) {
-        G.galleryMaxItems.lN=G.O.galleryMaxItems;
-        G.galleryMaxItems.l1=G.O.galleryMaxItems;
+
+      // gallery display transition
+      G.galleryDisplayTransition.lN=G.O.galleryDisplayTransition.toUpperCase();
+      G.galleryDisplayTransition.l1=G.galleryDisplayTransition.lN;
+      if( G.O.galleryL1DisplayTransition != null ) {
+        G.galleryDisplayTransition.l1=G.O.galleryL1DisplayTransition.toUpperCase();
       }
-      if( toType(G.O.galleryL1MaxItems) == 'number' && G.O.galleryL1MaxItems >= 0 ) {
+      // gallery display transition duration
+      G.galleryDisplayTransitionDuration.lN=G.O.galleryDisplayTransitionDuration;
+      G.galleryDisplayTransitionDuration.l1=G.galleryDisplayTransitionDuration.lN;
+      if( G.O.galleryL1DisplayTransitionDuration != null ) {
+        G.galleryDisplayTransitionDuration.l1=G.O.galleryL1DisplayTransitionDuration;
+      }
+
+      // gallery max items per album (not for inline/api defined items)
+      G.galleryMaxItems.lN=G.O.galleryMaxItems;
+      G.galleryMaxItems.l1=G.O.galleryMaxItems;
+      if( toType(G.O.galleryL1MaxItems) == 'number' ) {
         G.galleryMaxItems.l1=G.O.galleryL1MaxItems;
       }
 
       // gallery filter tags
       G.galleryFilterTags.lN=G.O.galleryFilterTags;
       G.galleryFilterTags.l1=G.O.galleryFilterTags;
-      if( G.O.galleryL1FilterTags != null && G.O.galleryL1FilterTags != undefined ) {
+      if( G.O.galleryL1FilterTags != null ) {
         G.galleryFilterTags.l1=G.O.galleryL1FilterTags;
       }
-      
-      
+
       // gallery pagination
       G.O.galleryPaginationMode=G.O.galleryPaginationMode.toUpperCase();
 
-      
       if( toType(G.O.slideshowDelay) == 'number' && G.O.slideshowDelay >= 2000 ) {
         G.VOM.slideshowDelay=G.O.slideshowDelay;
       }
@@ -5072,15 +5520,6 @@ console.log('#DisplayPhoto : '+  imageIdx);
         NanoConsoleLog(G, 'Parameter "slideshowDelay" must be an integer >= 2000 ms.');
       }
 
-      // thumbnail display interval
-      if( toType(G.O.thumbnailDisplayInterval) == 'number' && G.O.thumbnailDisplayInterval >= 0 ) {
-        G.tn.opt.lN.displayInterval=G.O.thumbnailDisplayInterval;
-        G.tn.opt.l1.displayInterval=G.O.thumbnailDisplayInterval;
-      }
-      else {
-        NanoConsoleLog(G, 'Parameter "thumbnailDisplayInterval" must be an integer.');
-      }
-      
       // gallery display transition
       if( typeof G.O.thumbnailDisplayTransition == 'boolean' ) {
         if( G.O.thumbnailDisplayTransition === true ) {
@@ -5094,15 +5533,16 @@ console.log('#DisplayPhoto : '+  imageIdx);
         }
       }
 
-      if( typeof G.O.fnThumbnailDisplayEffect == 'function' ) {
+      if( G.O.fnThumbnailDisplayEffect !== '' ) {
         // G.O.thumbnailDisplayTransition='CUSTOM';
         G.tn.opt.lN.displayTransition='CUSTOM';
         G.tn.opt.l1.displayTransition='CUSTOM';
       }
-      if( typeof G.O.fnThumbnailL1DisplayEffect == 'function' ) {
+      if( G.O.fnThumbnailL1DisplayEffect !== '' ) {
+      // if( typeof G.O.fnThumbnailL1DisplayEffect == 'function' ) {
         G.tn.opt.l1.displayTransition='CUSTOM';
       }
-      
+
       // parse thumbnail display transition
       if( typeof G.O.thumbnailDisplayTransition == 'string' ) {
         var st=G.O.thumbnailDisplayTransition.split('_');
@@ -5140,25 +5580,13 @@ console.log('#DisplayPhoto : '+  imageIdx);
           G.tn.opt.l1.displayTransitionEasing = st[2];
         }
       }
-      
-      // thumbnail display transition duration
-      if( G.O.thumbnailDisplayTransitionDuration !== undefined && G.O.thumbnailDisplayTransitionDuration != null ) {
-        G.tn.opt.lN.displayTransitionDuration=G.O.thumbnailDisplayTransitionDuration;
-        G.tn.opt.l1.displayTransitionDuration=G.O.thumbnailDisplayTransitionDuration;
-      }
-      if( G.O.thumbnailL1DisplayTransitionDuration !== undefined && G.O.thumbnailL1DisplayTransitionDuration != null ) {
-        G.tn.opt.l1.displayTransitionDuration=G.O.thumbnailL1DisplayTransitionDuration;
-      }
-      // thumbnail display transition interval duration
-      if( G.O.thumbnailDisplayInterval !== undefined && G.O.thumbnailDisplayInterval != null ) {
-        G.tn.opt.lN.displayInterval=G.O.thumbnailDisplayInterval;
-        G.tn.opt.l1.displayInterval=G.O.thumbnailDisplayInterval;
-      }
-      if( G.O.thumbnailL1DisplayInterval !== undefined && G.O.thumbnailL1DisplayInterval != null ) {
-        G.tn.opt.l1.displayInterval=G.O.thumbnailL1DisplayInterval;
-      }
 
-      
+      // thumbnail display transition duration
+      ThumbnailOpt('thumbnailDisplayTransitionDuration', 'thumbnailL1DisplayTransitionDuration', 'displayTransitionDuration');
+      // thumbnail display transition interval duration
+      ThumbnailOpt('thumbnailDisplayInterval', 'thumbnailL1DisplayInterval', 'displayInterval');
+
+
       // resolution breakpoints --> convert old syntax to new one
       if( G.O.thumbnailSizeSM !== undefined ) { G.O.breakpointSizeSM=G.O.thumbnailSizeSM; }
       if( G.O.thumbnailSizeME !== undefined ) { G.O.breakpointSizeME=G.O.thumbnailSizeME; }
@@ -5170,7 +5598,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
       if( G.O.thumbnailL1BuildInit2 !== undefined ) {
       var t1=G.O.thumbnailL1BuildInit2.split('|');
         for( var i=0; i<t1.length; i++ ) {
-          var o1=t1[i].split('_');
+          var o1=t1[i].trim().split('_');
           if( o1.length == 3 ) {
             var i1=NewTBuildInit();
             i1.element=ThumbnailOverEffectsGetCSSElement(o1[0], '');
@@ -5184,7 +5612,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
       if( G.O.thumbnailBuildInit2 !== undefined ) {
         var t1=G.O.thumbnailBuildInit2.split('|');
         for( var i=0; i<t1.length; i++ ) {
-          var o1=t1[i].split('_');
+          var o1=t1[i].trim().split('_');
           if( o1.length == 3 ) {
             var i1=NewTBuildInit();
             i1.element=ThumbnailOverEffectsGetCSSElement(o1[0], '');
@@ -5195,9 +5623,9 @@ console.log('#DisplayPhoto : '+  imageIdx);
         }
       }
 
-      
+
       // THUMBNAIL HOVER EFFETCS
-      
+
       // thumbnails hover effects - Level1
       var tL1HE=G.O.thumbnailL1HoverEffect2;
       if( tL1HE !== undefined ) {
@@ -5237,7 +5665,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
         }
       }
       G.tn.hoverEffects.level1=ThumbnailOverEffectsPreset(G.tn.hoverEffects.level1);
-  
+
       // thumbnails hover effects - other levels
       var tHE=G.O.thumbnailHoverEffect2;
       switch( toType(tHE) ) {
@@ -5281,9 +5709,9 @@ console.log('#DisplayPhoto : '+  imageIdx);
           G.O.touchAnimationL1=false;
         }
         G.O.touchAnimation=false;
-      }      
-      
-      
+      }
+
+
       // thumbnail sizes
       if( G.O.thumbnailHeight == 0 || G.O.thumbnailHeight == ''  ) {
         G.O.thumbnailHeight='auto';
@@ -5299,97 +5727,25 @@ console.log('#DisplayPhoto : '+  imageIdx);
       }
 
       // RETRIEVE ALL THUMBNAIL SIZES
-      if( toType(G.O.thumbnailWidth) == 'number' ) {
-        ThumbnailsSetSize( 'width', 'l1', G.O.thumbnailWidth, 'u');
-        ThumbnailsSetSize( 'width', 'lN', G.O.thumbnailWidth, 'u');
-      }
-      else {
-        var ws=G.O.thumbnailWidth.split(' ');
-        var v='auto';
-        if( ws[0].substring(0,4) != 'auto' ) { v=parseInt(ws[0]); }
-        var c='u';
-        if( ws[0].charAt(ws[0].length - 1) == 'C' ) { c='c'; }
-        ThumbnailsSetSize( 'width', 'l1', v, c );   // default value for all resolutions and navigation levels
-        ThumbnailsSetSize( 'width', 'lN', v, c );
-        for( var i=1; i<ws.length; i++ ) {
-          var r=ws[i].substring(0,2).toLowerCase();
-          if( /xs|sm|me|la|xl/i.test(r) ) {
-            var w=ws[i].substring(2);
-            var v='auto';
-            if( w.substring(0,4) != 'auto' ) { v=parseInt(w); }
-            var c='u';
-            if( w.charAt(w.length - 1) == 'C' ) { c='c'; }
-            G.tn.settings.width['l1'][r]=v;
-            G.tn.settings.width['lN'][r]=v;
-            G.tn.settings.width['l1'][r+'c']=c;
-            G.tn.settings.width['lN'][r+'c']=c;
-          }
-        }
-      }
-      if( G.O.thumbnailL1Width != undefined ) {
-        if( toType(G.O.thumbnailL1Width) == 'number' ) {
-          ThumbnailsSetSize( 'width', 'l1', G.O.thumbnailL1Width, 'u');
-        }
-        else {
-          var ws=G.O.thumbnailL1Width.split(' ');
-          var v='auto';
-          if( ws[0].substring(0,4) != 'auto' ) { v=parseInt(ws[0]); }
-          var c='u';
-          if( ws[0].charAt(ws[0].length - 1) == 'C' ) { c='c'; }
-          ThumbnailsSetSize( 'width', 'l1', v, c );
-          for( var i=1; i<ws.length; i++ ) {
-            var r=ws[i].substring(0,2).toLowerCase();
-            if( /xs|sm|me|la|xl/i.test(r) ) {
-              var w=ws[i].substring(2);
-              var v='auto';
-              if( w.substring(0,4) != 'auto' ) { v=parseInt(w); }
-              var c='u';
-              if( w.charAt(w.length - 1) == 'C' ) { c='c'; }
-              G.tn.settings.width['l1'][r]=v;
-              G.tn.settings.width['l1'][r+'c']=c;
-            }
-          }
-        }
-      }
+      function ThumbnailSizes( srcOpt, onlyl1, opt) {
+        if( G.O[srcOpt] == null ) { return; }
 
-      if( toType(G.O.thumbnailHeight) == 'number' ) {
-        ThumbnailsSetSize( 'height', 'l1', G.O.thumbnailHeight, 'u');
-        ThumbnailsSetSize( 'height', 'lN', G.O.thumbnailHeight, 'u');
-      }
-      else {
-        var ws=G.O.thumbnailHeight.split(' ');
-        var v='auto';
-        if( ws[0].substring(0,4) != 'auto' ) { v=parseInt(ws[0]); }
-        var c='u';
-        if( ws[0].charAt(ws[0].length - 1) == 'C' ) { c='c'; }
-        ThumbnailsSetSize( 'height', 'l1', v, c );   // default value for all resolutions and navigation levels
-        ThumbnailsSetSize( 'height', 'lN', v, c );
-        for( var i=1; i<ws.length; i++ ) {
-          var r=ws[i].substring(0,2).toLowerCase();
-          if( /xs|sm|me|la|xl/i.test(r) ) {
-            var w=ws[i].substring(2);
-            var v='auto';
-            if( w.substring(0,4) != 'auto' ) { v=parseInt(w); }
-            var c='u';
-            if( w.charAt(w.length - 1) == 'C' ) { c='c'; }
-            G.tn.settings.height['l1'][r]=v;
-            G.tn.settings.height['lN'][r]=v;
-            G.tn.settings.height['l1'][r+'c']=c;
-            G.tn.settings.height['lN'][r+'c']=c;
+        if( toType(G.O[srcOpt]) == 'number' ) {
+          ThumbnailsSetSize( opt, 'l1', G.O[srcOpt], 'u');
+          if( !onlyl1 ) {
+            ThumbnailsSetSize( opt, 'lN', G.O[srcOpt], 'u');
           }
         }
-      }
-      if( G.O.thumbnailL1Height != undefined ) {
-        if( toType(G.O.thumbnailL1Height) == 'number' ) {
-          ThumbnailsSetSize( 'height', 'l1', G.O.thumbnailL1Height, 'u');
-        }
         else {
-          var ws=G.O.thumbnailL1Height.split(' ');
+          var ws=G.O[srcOpt].split(' ');
           var v='auto';
           if( ws[0].substring(0,4) != 'auto' ) { v=parseInt(ws[0]); }
           var c='u';
           if( ws[0].charAt(ws[0].length - 1) == 'C' ) { c='c'; }
-          ThumbnailsSetSize( 'height', 'l1', v, c );
+          ThumbnailsSetSize( opt, 'l1', v, c );   // default value for all resolutions and navigation levels
+          if( !onlyl1 ) {
+            ThumbnailsSetSize( opt, 'lN', v, c );
+          }
           for( var i=1; i<ws.length; i++ ) {
             var r=ws[i].substring(0,2).toLowerCase();
             if( /xs|sm|me|la|xl/i.test(r) ) {
@@ -5398,19 +5754,29 @@ console.log('#DisplayPhoto : '+  imageIdx);
               if( w.substring(0,4) != 'auto' ) { v=parseInt(w); }
               var c='u';
               if( w.charAt(w.length - 1) == 'C' ) { c='c'; }
-              G.tn.settings.height['l1'][r]=v;
-              G.tn.settings.height['l1'][r+'c']=c;
+              G.tn.settings[opt]['l1'][r]=v;
+              G.tn.settings[opt]['l1'][r+'c']=c;
+              if( !onlyl1 ) {
+                G.tn.settings[opt]['lN'][r]=v;
+                G.tn.settings[opt]['lN'][r+'c']=c;
+              }
             }
           }
         }
       }
-      
+      ThumbnailSizes( 'thumbnailWidth', false, 'width');
+      ThumbnailSizes( 'thumbnailL1Width', true, 'width');
+
+      ThumbnailSizes( 'thumbnailHeight', false, 'height');
+      ThumbnailSizes( 'thumbnailL1Height', true, 'height');
+
+
       G.O.thumbnailBorderHorizontal=parseInt(G.O.thumbnailBorderHorizontal);
       G.O.thumbnailBorderVertical=parseInt(G.O.thumbnailBorderVertical);
       G.O.thumbnailLabelHeight=parseInt(G.O.thumbnailLabelHeight);
 
       G.layout.SetEngine();
-      
+
       // init plugins
       switch( G.O.kind ) {
         // MARKUP / API
@@ -5426,8 +5792,8 @@ console.log('#DisplayPhoto : '+  imageIdx);
     // HOVER EFFECTS
     function ThumbnailHoverEffectExtract( name, effect) {
       var easings=[ 'easeInQuad', 'easeOutQuad', 'easeInOutQuad', 'easeInCubic', 'easeOutCubic', 'easeInOutCubic', 'easeInQuart', 'easeOutQuart', 'easeInOutQuart', 'easeInQuint', 'easeOutQuint', 'easeInOutQuint', 'easeInSine', 'easeOutSine', 'easeInOutSine', 'easeInExpo', 'easeOutExpo', 'easeInOutExpo', 'easeInCirc', 'easeOutCirc', 'easeInOutCirc', 'easeOutBounce', 'easeInBack', 'easeOutBack', 'easeInOutBack', 'elastic', 'bounce'];
-    
-    
+
+
       var sp=name.split('_');
       if( sp.length >= 4 ) {
         // var oDef=NewTHoverEffect();
@@ -5440,7 +5806,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
 
           for( var n=4; n<sp.length; n++ ) {
             var v=sp[n];
-            
+
             // check if an easing name
             var foundEasing=false;
             for( var e=0; e<easings.length; e++) {
@@ -5453,9 +5819,9 @@ console.log('#DisplayPhoto : '+  imageIdx);
             if( foundEasing === true ) {
               continue;
             }
-            
+
             v=v.toUpperCase();
-            
+
             if( v == 'HOVERIN' ) {
               effect.hoverout=false;
               continue;
@@ -5464,12 +5830,12 @@ console.log('#DisplayPhoto : '+  imageIdx);
               effect.hoverin=false;
               continue;
             }
-            
+
             if( v == 'KEYFRAME' ) {
               effect.firstKeyframe=false;
               continue;
             }
-            
+
             var num = parseInt(v.replace(/[^0-9\.]/g, ''), 10);   // extract a number if on exists
 
             if( num > 0 ) {
@@ -5490,18 +5856,18 @@ console.log('#DisplayPhoto : '+  imageIdx);
                 effect.delayBack=num;
                 continue;
               }
-              
+
               // no parameter name found -> default is duration
               effect.duration=num;
             }
-            
+
 
           }
-          
-          
-        }        
+
+
+        }
         effect.element=ThumbnailOverEffectsGetCSSElement(sp[0], effect.type);
-        
+
       }
       else {
         effect.name=name;
@@ -5510,11 +5876,11 @@ console.log('#DisplayPhoto : '+  imageIdx);
       }
       return effect;
     }
-    
-    
+
+
     function ThumbnailOverEffectsGetCSSElement( element, property ) {
         var r=element;
-        
+
         switch ( element ) {
           case 'image':
             if( property == 'blur' || property == 'brightness' || property == 'grayscale' || property == 'sepia' || property == 'contrast' || property == 'opacity'|| property == 'saturate' ) {
@@ -5545,11 +5911,11 @@ console.log('#DisplayPhoto : '+  imageIdx);
         }
         return r;
     }
-    
+
     // convert preset hover effects to new ones (nanogallery2)
     function ThumbnailOverEffectsPreset( effects ) {
 
-      // COMPATIBILITY WITH NANOGALLERY1
+      // COMPATIBILITY WITH nanoGALLERY
       // OK:
       //  'borderLighter', 'borderDarker', 'scale120', 'labelAppear', 'labelAppear75', 'labelOpacity50', 'scaleLabelOverImage'
       //  'overScale', 'overScaleOutside', 'descriptionAppear'
@@ -5557,12 +5923,12 @@ console.log('#DisplayPhoto : '+  imageIdx);
       //  'imageScale150', 'imageScaleIn80', 'imageScale150Outside', 'imageSlideUp', 'imageSlideDown', 'imageSlideRight', 'imageSlideLeft'
       //  'labelSlideUpTop', 'labelSlideUp', 'labelSlideDown', 'descriptionSlideUp'
       // KO:
-      //  'labelSplit4', 'labelSplitVert', 'labelAppearSplit4', 'labelAppearSplitVert' 
+      //  'labelSplit4', 'labelSplitVert', 'labelAppearSplit4', 'labelAppearSplitVert'
       // TODO:
       //  'rotateCornerBL', 'rotateCornerBR', 'imageSplit4', 'imageSplitVert', 'imageRotateCornerBL', 'imageRotateCornerBR', 'imageFlipHorizontal', 'imageFlipVertical'
 
-    
-   
+
+
       var newEffects=[];
       for( var i=0; i< effects.length; i++ ) {
         switch( effects[i].name.toUpperCase() ) {
@@ -5678,13 +6044,13 @@ console.log('#DisplayPhoto : '+  imageIdx);
           case 'IMAGESEPIAOFF':
             newEffects.push(ThumbnailHoverEffectExtract('image_sepia_1%_100%', effects[i]));
             break;
-            
+
           default:
             newEffects.push(effects[i]);
             break;
         }
       }
-      
+
       return newEffects;
     }
 
@@ -5701,12 +6067,12 @@ console.log('#DisplayPhoto : '+  imageIdx);
     }
 
 
-    
+    // Thumbnail hover effect definition
     function NewTHoverEffect() {
-      var oDef={ 
+      var oDef={
           name:           '',
           element:        '',               // element class
-          type:           '',               
+          type:           '',
           from:           '',               // start value
           to:             '',               // end value
           hoverin:        true,
@@ -5729,10 +6095,10 @@ console.log('#DisplayPhoto : '+  imageIdx);
       return oDef;
     }
 
-    
+
     // build a dummy thumbnail to get different sizes and to cache them
     function ThumbnailDefCaches() {
-      
+
         // thumbnail content CSS styles
         // if( G.O.thumbnailLabel.display ) {
         switch( G.O.thumbnailLabel.position ){
@@ -5826,7 +6192,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
           G.tn.style.lN.desc+='font-size:'+G.O.thumbnailLabel.descriptionFontSize+';';
           G.tn.style.l1.desc+='font-size:'+G.O.thumbnailLabel.descriptionFontSize+';';
         }
-        
+
       // }
       if( G.O.thumbnailL1Label && G.O.thumbnailL1Label.display ) {
         switch( G.O.thumbnailL1Label.position ){
@@ -5905,11 +6271,11 @@ console.log('#DisplayPhoto : '+  imageIdx);
           G.tn.style.l1.desc+='font-size:'+G.O.thumbnailL1Label.titleFontSize+';';
         }
       }
-      
+
       G.tn.borderWidth=G.O.thumbnailBorderHorizontal;
       G.tn.borderHeight=G.O.thumbnailBorderVertical;
-      
-      
+
+
       // Retrieve info for level LN
       // TODO: do this only for grid layout and label onBottom
 
@@ -5959,8 +6325,8 @@ console.log('#DisplayPhoto : '+  imageIdx);
       //   // G.tn.labelHeight.l1= $newDiv.find('.nGY2GThumbnailLabel').outerHeight(true);
       //   G.tn.labelHeight.l1= lh;
       // }
-      
-      
+
+
       // default thumbnail sizes levels l1 and lN
       var lst=['xs','sm','me','la','xl'];
       for( var i=0; i< lst.length; i++ ) {
@@ -5984,9 +6350,9 @@ console.log('#DisplayPhoto : '+  imageIdx);
           G.tn.defaultSize.height['l1'][lst[i]]=w;      // dynamic height --> set width value as default
         }
       }
-      
+
     }
-    
+
 
     // ##### THUMBNAIL SIZE MANAGEMENT
     function ThumbnailsSetSize( dir, level, v, crop ) {
@@ -6007,7 +6373,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
     function ColorSchemeGetCurrent() {
       var cs=null;
       switch(toType(G.O.colorScheme)) {
-        case 'object':    // user custom color scheme object 
+        case 'object':    // user custom color scheme object
           cs=G.colorScheme_dark;  // default color scheme
           jQuery.extend(true,cs,G.O.colorScheme);
           break;
@@ -6028,13 +6394,13 @@ console.log('#DisplayPhoto : '+  imageIdx);
       }
       return cs;
     }
-    
+
     // ##### BREADCRUMB/THUMBNAIL COLOR SCHEME #####
     function SetColorScheme() {
       var cs=null;
       var colorSchemeLabel='';
       switch(toType(G.O.colorScheme)) {
-        case 'object':    // user custom color scheme object 
+        case 'object':    // user custom color scheme object
           cs=G.colorScheme_dark;  // default color scheme
           jQuery.extend(true,cs,G.O.colorScheme);
           colorSchemeLabel='nanogallery_colorscheme_custom_'+G.baseEltID;
@@ -6060,7 +6426,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
 
       //var s1='.nanogallery_theme_'+G.O.theme+' ';
       var s1='.' + colorSchemeLabel + ' ';
-    
+
       // navigation bar
       var s=s1+'.nGY2Navigationbar { background:'+cs.navigationBar.background+'; }'+'\n';
       if( cs.navigationBar.border !== undefined && cs.navigationBar.border !== '' ) { s+=s1+'.nGY2Navigationbar { border:'+cs.navigationBar.border+'; }'+'\n'; }
@@ -6068,7 +6434,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
       if( cs.navigationBar.borderBottom !== undefined && cs.navigationBar.borderBottom !== '' ) { s+=s1+'.nGY2Navigationbar { border-bottom:'+cs.navigationBar.borderBottom+'; }'+'\n'; }
       if( cs.navigationBar.borderRight !== undefined && cs.navigationBar.borderRight !== '' ) { s+=s1+'.nGY2Navigationbar { border-right:'+cs.navigationBar.borderRight+'; }'+'\n'; }
       if( cs.navigationBar.borderLeft !== undefined && cs.navigationBar.borderLeft !== '' ) { s+=s1+'.nGY2Navigationbar { border-left:'+cs.navigationBar.borderLeft+'; }'+'\n'; }
-      
+
       // navigation bar - breadcrumb
       s+=s1+'.nGY2Breadcrumb { background:'+cs.navigationBreadcrumb.background+'; border-radius:'+cs.navigationBreadcrumb.borderRadius+'; }'+'\n';
       s+=s1+'.nGY2Breadcrumb .oneItem  { color:'+cs.navigationBreadcrumb.color+'; }'+'\n';
@@ -6078,7 +6444,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
       s+=s1+'.nGY2NavFilterUnselected { color:'+cs.navigationFilter.color+'; background:'+cs.navigationFilter.background+'; border-radius:'+cs.navigationFilter.borderRadius+'; }'+'\n';
       s+=s1+'.nGY2NavFilterSelected { color:'+cs.navigationFilter.colorSelected+'; background:'+cs.navigationFilter.backgroundSelected+'; border-radius:'+cs.navigationFilter.borderRadius+'; }'+'\n';
       s+=s1+'.nGY2NavFilterSelectAll { color:'+cs.navigationFilter.colorSelected+'; background:'+cs.navigationFilter.background+'; border-radius:'+cs.navigationFilter.borderRadius+'; }'+'\n';
-      
+
       // thumbnails
       s+=s1+'.nGY2GThumbnail { background:'+cs.thumbnail.background+'; border-color:'+cs.thumbnail.borderColor+'; border-top-width:'+G.O.thumbnailBorderVertical+'px; border-right-width:'+G.O.thumbnailBorderHorizontal+'px; border-bottom-width:'+G.O.thumbnailBorderVertical+'px; border-left-width:'+G.O.thumbnailBorderHorizontal+'px;}'+'\n';
       s+=s1+'.nGY2GThumbnailStack { background:'+cs.thumbnail.stackBackground+'; }'+'\n';
@@ -6094,7 +6460,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
       s+=s1+'.nGY2GThumbnailIcons { padding:'+cs.thumbnailIcon.padding+'; }\n';
       s+=s1+'.nGY2GThumbnailIcon { color:'+cs.thumbnailIcon.color+'; }\n';
       s+=s1+'.nGY2GThumbnailIconTextBadge { background-color:'+cs.thumbnailIcon.color+'; }\n';
-      
+
       // gallery pagination -> dot/rectangle based
       if( G.O.galleryPaginationMode != 'NUMBERS' ) {
         s+=s1+'.nGY2paginationDot { border:'+cs.pagination.shapeBorder+'; background:'+cs.pagination.shapeColor+';}\n';
@@ -6108,16 +6474,16 @@ console.log('#DisplayPhoto : '+  imageIdx);
         s+=s1+'.nGY2PaginationNext { background:'+cs.pagination.background+'; color:'+cs.pagination.color+'; border-radius:'+cs.pagination.borderRadius+'; }\n';
         s+=s1+'.nGY2paginationItemCurrentPage { background:'+cs.pagination.backgroundSelected+'; }\n';
       }
-      
+
       // gallery more button
       s+=s1+'.nGY2GalleryMoreButtonAnnotation { background:'+cs.thumbnail.background+'; border-color:'+cs.thumbnail.borderColor+'; border-top-width:'+G.O.thumbnailBorderVertical+'px; border-right-width:'+G.O.thumbnailBorderHorizontal+'px; border-bottom-width:'+G.O.thumbnailBorderVertical+'px; border-left-width:'+G.O.thumbnailBorderHorizontal+'px;}\n';
       s+=s1+'.nGY2GalleryMoreButtonAnnotation  { color:'+cs.thumbnail.titleColor+'; '+(cs.thumbnail.titleShadow =='' ? '': 'Text-Shadow:'+cs.thumbnail.titleShadow)+'; }\n';
-      
+
       jQuery('head').append('<style id="ngycs_'+G.baseEltID+'">'+s+'</style>');
       G.$E.base.addClass(colorSchemeLabel);
 
     };
-    
+
     // ##### VIEWER COLOR SCHEME #####
     function SetColorSchemeViewer( ) {
 
@@ -6128,7 +6494,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
 
       var cs=null;
       switch(toType(G.O.colorSchemeViewer)) {
-        case 'object':    // user custom color scheme object 
+        case 'object':    // user custom color scheme object
           cs=G.colorSchemeViewer_dark;
           jQuery.extend(true,cs,G.O.colorSchemeViewer);
           G.VOM.colorSchemeLabel='nanogallery_colorschemeviewer_custom_'+G.baseEltID;
@@ -6158,16 +6524,16 @@ console.log('#DisplayPhoto : '+  imageIdx);
           return;
       }
 
-      var s1='.' + G.VOM.colorSchemeLabel + ' ';
-      var s=s1+'.nGY2Viewer { background:'+cs.background+'; }'+'\n';
-      s+=s1+'.nGY2ViewerImage { border:'+cs.imageBorder+'; box-shadow:'+cs.imageBoxShadow+'; }'+'\n';
-      s+=s1+'.nGY2Viewer .toolbarBackground { background:'+cs.barBackground+'; }'+'\n';
-      s+=s1+'.nGY2Viewer .toolbar { border:'+cs.barBorder+'; color:'+cs.barColor+'; }'+'\n';
-      s+=s1+'.nGY2Viewer .toolbar .previousButton:after { color:'+cs.barColor+'; }'+'\n';
-      s+=s1+'.nGY2Viewer .toolbar .nextButton:after { color:'+cs.barColor+'; }'+'\n';
-      s+=s1+'.nGY2Viewer .toolbar .closeButton:after { color:'+cs.barColor+'; }'+'\n';
-      s+=s1+'.nGY2Viewer .toolbar .label .title { color:'+cs.barColor+'; }'+'\n';
-      s+=s1+'.nGY2Viewer .toolbar .label .description { color:'+cs.barDescriptionColor+'; }'+'\n';
+      var s1 = '.' + G.VOM.colorSchemeLabel + ' ';
+      var s = s1+'.nGY2Viewer { background:'+cs.background+'; }'+'\n';
+      s += s1+'.nGY2ViewerImage { border:'+cs.imageBorder+'; box-shadow:'+cs.imageBoxShadow+'; }'+'\n';
+      s += s1+'.nGY2Viewer .toolbarBackground { background:'+cs.barBackground+'; }'+'\n';
+      s += s1+'.nGY2Viewer .toolbar { border:'+cs.barBorder+'; color:'+cs.barColor+'; }'+'\n';
+      s += s1+'.nGY2Viewer .toolbar .previousButton:after { color:'+cs.barColor+'; }'+'\n';
+      s += s1+'.nGY2Viewer .toolbar .nextButton:after { color:'+cs.barColor+'; }'+'\n';
+      s += s1+'.nGY2Viewer .toolbar .closeButton:after { color:'+cs.barColor+'; }'+'\n';
+      s += s1+'.nGY2Viewer .toolbar .label .title { color:'+cs.barColor+'; }'+'\n';
+      s += s1+'.nGY2Viewer .toolbar .label .description { color:'+cs.barDescriptionColor+'; }'+'\n';
       jQuery('head').append('<style>'+s+'</style>');
       G.VOM.$cont.addClass(G.VOM.colorSchemeLabel);
     };
@@ -6185,8 +6551,8 @@ console.log('#DisplayPhoto : '+  imageIdx);
             throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable");
           }
 
-          var aArgs = Array.prototype.slice.call(arguments, 1), 
-              fToBind = this, 
+          var aArgs = Array.prototype.slice.call(arguments, 1),
+              fToBind = this,
               fNOP = function () {},
               fBound = function () {
                 return fToBind.apply(this instanceof fNOP && oThis
@@ -6202,7 +6568,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
         };
       }
 
-      // requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
+      // requestAnimationFrame polyfill by Erik M�ller. fixes from Paul Irish and Tino Zijdel
       // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
       // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
       // MIT license
@@ -6221,14 +6587,14 @@ console.log('#DisplayPhoto : '+  imageIdx);
             lastTime = currTime + timeToCall;
             return id;
           };
-       
+
         if (!window.cancelAnimationFrame)
           window.cancelAnimationFrame = function(id) {
             clearTimeout(id);
           };
       }());
 
-      
+
       // POLYFILL FOR addEventListener/removeEventListener function --> for IE8
       // found on https://gist.github.com/jonathantneal/3748027
       try {
@@ -6265,8 +6631,8 @@ console.log('#DisplayPhoto : '+  imageIdx);
         browserNotification();
         return false;
       }
-      
-      
+
+
       // array.removeIf -> removes items from array base on a function's result
       Array.prototype.removeIf = function(callback) {
         var i = this.length;
@@ -6275,19 +6641,19 @@ console.log('#DisplayPhoto : '+  imageIdx);
             this.splice(i, 1);
           }
         }
-      };      
-      
+      };
+
     }
-    
-    
+
+
     function GalleryClicked(e) {
-    
+
       var r=GalleryEventRetrieveElementl(e, false);
 
       if( r.GOMidx == -1 ) {
         return 'exit';
       }
-      
+
       var idx=G.GOM.items[r.GOMidx].thumbnailIdx;
       switch( r.action ) {
         case 'OPEN':
@@ -6321,8 +6687,14 @@ console.log('#DisplayPhoto : '+  imageIdx);
           break;
         default:
           // all other actions (custom1..10, or anything else)
-          if(typeof G.O.fnThumbnailToolCustAction === 'function'){
-            G.O.fnThumbnailToolCustAction(r.action, G.I[idx]);
+          if( G.O.fnThumbnailToolCustAction !== null ) {
+            if( typeof G.O.fnThumbnailToolCustAction == 'function' ) {
+              G.O.fnThumbnailToolCustAction(r.action, G.I[idx]);
+            }
+            else {
+              // defined in markup
+              window[G.O.fnThumbnailToolCustAction](r.action, G.I[idx]);
+            }
           }
           break;
       }
@@ -6335,16 +6707,16 @@ console.log('#DisplayPhoto : '+  imageIdx);
       if( G.I[idx].downloadURL != undefined && G.I[idx].downloadURL != '' ) {
         url=G.I[idx].downloadURL;
       }
-      
+
       var a = document.createElement('a');
       a.href = url;
       a.download = url.split('.').pop();
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);      
-      
+      document.body.removeChild(a);
+
     }
-    
+
     // add one image to the shopping cart
     function AddToCart( idx ) {
       // increment counter if already in shopping cart
@@ -6352,27 +6724,37 @@ console.log('#DisplayPhoto : '+  imageIdx);
       for( var i=0; i<G.shoppingCart.length; i++ ) {
         if( G.shoppingCart[i].idx == idx ) {
           G.shoppingCart[i].cnt++;
-          if(typeof G.O.fnShoppingCartUpdated === 'function'){
-            G.O.fnShoppingCartUpdated(G.shoppingCart);
+          if( G.O.fnShoppingCartUpdated !== null ) {
+            if( typeof G.O.fnShoppingCartUpdated == 'function' ) {
+              G.O.fnShoppingCartUpdated(G.shoppingCart);
+            }
+            else {
+              // defined in markup
+              window[G.O.fnShoppingCartUpdated](G.shoppingCart);
+            }
           }
-          // G.$E.base.trigger('shoppingCartUpdated.nanogallery2', new Event('shoppingCartUpdated.nanogallery2'));
           TriggerCustomEvent('shoppingCartUpdated');
           return;
         }
       }
-      
+
       // add to shopping cart
       if( !found) {
         G.shoppingCart.push( { idx:idx, ID:G.I[idx].GetID(), cnt:1} );
-        if(typeof G.O.fnShoppingCartUpdated === 'function'){
-          G.O.fnShoppingCartUpdated(G.shoppingCart);
+        if( G.O.fnShoppingCartUpdated !== null ) {
+          if( typeof G.O.fnShoppingCartUpdated == 'function' ) {
+            G.O.fnShoppingCartUpdated(G.shoppingCart);
+          }
+          else {
+            // defined in markup
+            window[G.O.fnShoppingCartUpdated](G.shoppingCart);
+          }
         }
-        // G.$E.base.trigger('shoppingCartUpdated.nanogallery2', new Event('shoppingCartUpdated.nanogallery2'));
         TriggerCustomEvent('shoppingCartUpdated');
       }
     }
-    
-    
+
+
     function ThumbnailSelectionClear() {
       G.GOM.nbSelected=0;
       var nbTn=G.GOM.items.length;
@@ -6380,15 +6762,20 @@ console.log('#DisplayPhoto : '+  imageIdx);
         var item=G.I[G.GOM.items[i].thumbnailIdx];
         if( item.selected ) {
           item.selected=false;
-          if(typeof G.O.fnThumbnailSelection === 'function'){
-            // called when the selection status of an item changed
-            G.O.fnThumbnailSelection(item.$elt, item, G.I);
+          if( G.O.fnThumbnailSelection !== null ) {
+            if( typeof G.O.fnThumbnailSelection == 'function' ) {
+              G.O.fnThumbnailSelection(item.$elt, item, G.I);
+            }
+            else {
+              // defined in markup
+              window[G.O.fnThumbnailSelection](item.$elt, item, G.I);
+            }
           }
         }
         item.selected=false;
       }
     }
-    
+
     function ThumbnailSelectionToggle(idx){
       var item=G.I[idx];
       if( item.selected === true ) {
@@ -6402,22 +6789,28 @@ console.log('#DisplayPhoto : '+  imageIdx);
         TriggerCustomEvent('itemSelected');
       }
     }
-    
-    
+
+
     // this replaces ThumbnailSelection()
     function ThumbnailSelectionSet(item, selected ){
-      
+
       item.selected=selected;
-      
+
       ThumbnailSelectionSetIcon( item );
-      
-      if(typeof G.O.fnThumbnailSelection === 'function'){
-        // called when the selection status of an item changed
-        G.O.fnThumbnailSelection(item.$elt, item, G.I);
+
+      // called when the selection status of an item changed
+      if( G.O.fnThumbnailSelection !== null ) {
+        if( typeof G.O.fnThumbnailSelection == 'function' ) {
+          G.O.fnThumbnailSelection(item.$elt, item, G.I);
+        }
+        else {
+          // defined in markup
+          window[G.O.fnThumbnailSelection](item.$elt, item, G.I);
+        }
       }
-    
+
     }
-    
+
     function ThumbnailSelectionSetIcon( item ) {
       if( item.$elt == null ) {
         // thumbnail is not built
@@ -6438,15 +6831,15 @@ console.log('#DisplayPhoto : '+  imageIdx);
         $icon.html(G.O.icons.thumbnailUnselected);
       }
     }
-    
-    
+
+
     // display a modal popup for sharing image/album
     function PopupShare(idx) {
-    
+
       // SEE SAMPLES: https://gist.github.com/chrisjlee/5196139
       // https://github.com/Julienh/Sharrre
-    
-    
+
+
       var item=G.I[idx];
 
       var currentURL=document.location.protocol +'//'+document.location.hostname + document.location.pathname;
@@ -6457,7 +6850,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
       else {
         newLocationHash+=item.GetID();
       }
-    
+
       var content ='';
       content+='<div class="nGY2PopupOneItem" style="text-align:center;" data-share="facebook">'+G.O.icons.shareFacebook+'</div>';
       content+='<div class="nGY2PopupOneItem" style="text-align:center;" data-share="pinterest">'+G.O.icons.sharePinterest+'</div>';
@@ -6474,13 +6867,13 @@ console.log('#DisplayPhoto : '+  imageIdx);
 
       var currentTitle=item.title;
       var currentTn=item.thumbImg().src;
-      
-      
+
+
       Popup('Share to:', content, 'Center');
-      
+
       G.popup.$elt.find('.nGY2PopupOneItem').on('click', function(e) {
         e.stopPropagation();
-        
+
         var shareURL='';
         var found=true;
         switch(jQuery(this).attr('data-share').toUpperCase()) {
@@ -6514,48 +6907,48 @@ console.log('#DisplayPhoto : '+  imageIdx);
             found=false;
             break;
         }
-        
+
         if( found ) {
           window.open(shareURL,"","height=550,width=500,left=100,top=100,menubar=0");          window.open(shareURL,"","height=550,width=500,left=100,top=100,menubar=0");
           G.popup.close();
           // $popup.remove();
         }
-        
+
       });
     }
-    
+
     // build a modal popup
     function Popup(title, content, align) {
-      var pp='<div class="nGY2Popup" style="opacity:0;"><div class="nGY2PopupContent'+align+'">';
-      pp+='<div class="nGY2PopupCloseButton">'+G.O.icons.buttonClose+'</div>';
-      pp+='<div class="nGY2PopupTitle">'+title+'</div>';
-      pp+=content;
-      pp+='</div></div>';
-      
+      var pp =  '<div class="nGY2Popup" style="opacity:0;"><div class="nGY2PopupContent'+align+'">';
+      pp +=     '<div class="nGY2PopupCloseButton">'+G.O.icons.buttonClose+'</div>';
+      pp +=     '<div class="nGY2PopupTitle">'+title+'</div>';
+      pp +=     content;
+      pp +=     '</div></div>';
+
       G.popup.$elt=jQuery(pp).appendTo('body');
       setElementOnTop( G.VOM.$viewer, G.popup.$elt);
-      
+
       G.popup.isDisplayed=true;
-      
+
       var tweenable = new NGTweenable();
       tweenable.tween({
         from:       { opacity:0  },
         to:         { opacity:1 },
-        easing: 'easeInOutSine',
-        duration: 180,
-        step: function (state, att) {
+        easing:     'easeInOutSine',
+        duration:   180,
+        step:       function (state, att) {
           G.popup.$elt.css('opacity',state.opacity);
         },
-        finish: function (state, att) {
+        finish:     function (state, att) {
           G.popup.$elt.css('opacity',1);
         }
       });
-      
+
       G.popup.$elt.find('.nGY2PopupCloseButton').on('click', function(e) {
         e.stopPropagation();
         G.popup.close();
       });
-      
+
     }
 
 
@@ -6570,7 +6963,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
         }
       }
     }
-    
+
     function GalleryMouseLeave(e) {
       if( !G.VOM.viewerDisplayed && G.GOM.albumIdx != -1 ) {
         var r=GalleryEventRetrieveElementl(e, true);
@@ -6581,10 +6974,10 @@ console.log('#DisplayPhoto : '+  imageIdx);
         }
       }
     }
-    
+
     function GalleryEventRetrieveElementl( e, ignoreSubItems ) {
       var r= { action:'NONE', GOMidx:-1 };
-      
+
       if( e == undefined ) {
         return r;
       }
@@ -6611,16 +7004,22 @@ console.log('#DisplayPhoto : '+  imageIdx);
       }
       return r;
     }
-    
+
 
     // Open one thumbnail
     function ThumbnailOpen( idx, ignoreSelected ) {
       var item=G.I[idx];
 
-      if( typeof G.O.fnThumbnailClicked === 'function' ){
-        if( !G.O.fnThumbnailClicked(item.$elt, item) ) { return; }
+      if( G.O.fnThumbnailClicked !== null ) {
+        if( typeof G.O.fnThumbnailClicked == 'function' ) {
+          G.O.fnThumbnailClicked(item.$elt, item);
+        }
+        else {
+          // defined in markup
+          window[G.O.fnThumbnailClicked](item.$elt, item);
+        }
       }
-      
+
       // open URL
       if( item.destinationURL !== undefined && item.destinationURL.length > 0 ) {
         window.location = item.destinationURL;
@@ -6651,12 +7050,11 @@ console.log('#DisplayPhoto : '+  imageIdx);
           break;
       }
     }
-    
+
 
     // Open link to original image (new window)
     function OpenOriginal( item ) {
       switch( G.O.kind ) {
-        case 'json':
         case 'flickr':
           var sU='https://www.flickr.com/photos/'+G.O.userID+'/'+item.GetID();
           window.open(sU,'_blank');
@@ -6671,7 +7069,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
           break;
       }
     }
-    
+
     // Display one photo (with internal or external viewer)
     function DisplayPhotoIdx( imageIdx ) {
 
@@ -6682,22 +7080,22 @@ console.log('#DisplayPhoto : '+  imageIdx);
         OpenOriginal( G.I[imageIdx] );
         return;
       }
-        
+
       var items=[];
-      
+
       // G.VOM.currItemIdx=imageIdx;
       G.VOM.currItemIdx=0;
       G.VOM.items=[];
       G.VOM.albumID=G.I[imageIdx].albumID;
-      
+
       var vimg=new VImg(imageIdx);
       G.VOM.items.push(vimg);
       items.push(G.I[imageIdx]);
-//TODO -> danger -> pourquoi reconstruire la liste si déjà ouvert (back/forward)     
+//TODO -> danger? -> pourquoi reconstruire la liste si d�j� ouvert (back/forward)
       var l=G.I.length;
       for( var idx=imageIdx+1; idx<l ; idx++) {
         var item=G.I[idx];
-        if( item.kind == 'image' && item.albumID == G.VOM.albumID && item.checkTagFilter() && item.isSearchFound() && item.destinationURL == '' ) {
+        if( item.kind == 'image' && item.isToDisplay(G.VOM.albumID) && item.destinationURL == '' ) {
           var vimg=new VImg(idx);
           G.VOM.items.push(vimg);
           items.push(item);
@@ -6707,7 +7105,7 @@ console.log('#DisplayPhoto : '+  imageIdx);
       var cnt=1;
       for( var idx=0; idx<imageIdx ; idx++) {
         var item=G.I[idx];
-        if( item.kind == 'image' && item.albumID == G.VOM.albumID && item.checkTagFilter() && item.isSearchFound() && item.destinationURL == '' ) {
+        if( item.kind == 'image' && item.isToDisplay(G.VOM.albumID) && item.destinationURL == '' ) {
           var vimg=new VImg(idx);
           vimg.imageNumber=cnt;
           G.VOM.items.push(vimg);
@@ -6719,48 +7117,74 @@ console.log('#DisplayPhoto : '+  imageIdx);
         G.VOM.items[i].imageNumber=cnt;
         cnt++;
       }
-    
-      if( typeof G.O.fnThumbnailOpen == 'function' ) { 
-        // opens image with external viewer
-        G.O.fnThumbnailOpen(items);
-        return;
+
+      // opens image with external viewer
+      if( G.O.fnThumbnailOpen !== null ) {
+        if( typeof G.O.fnThumbnailOpen == 'function' ) {
+          G.O.fnThumbnailOpen(items);
+        }
+        else {
+          // defined in markup
+          window[G.O.fnThumbnailOpen](items);
+        }
       }
-    
+
       if( !G.VOM.viewerDisplayed ) {
         // build and display
         OpenInternalViewer(0);
       }
       else {
         // display
-        // DisplayInternalViewer(imageIdx, '');
         G.VOM.$imgC.css({ opacity:0, left:0, visibility:'hidden' }).attr('src','');
-        G.VOM.$imgC.children().eq(0).attr('src',G.emptyGif).attr('src',G.VOM.Item(0).responsiveURL());
+        G.VOM.ImageLoader.loadImage(VieweImgSizeRetrieved, G.VOM.Item(0).responsiveURL(), G.VOM.Item(0));
+        G.VOM.$imgC.children().eq(0).attr('src',G.emptyGif).attr('src', G.VOM.Item(0).responsiveURL());
+        // ViewerDisplayDominantColors(G.VOM.Item(0), G.VOM.$imgC.children());
         DisplayInternalViewer(0, '');
       }
     }
 
-    // display image with internal viewer
+    function ViewerDisplayDominantColors(item, $img) {
+      // if( item.imageDominantColors != null ) {
+        // $img.css({ 'background': "url('data:image/gif;base64,"+item.imageDominantColors+"') no-repeat", 'background-size': '100% 100%'});
+      // }
+    }
+
+    // is callbacked as soon as the size of an image has been retrieved
+    function VieweImgSizeRetrieved(w,h, url, item, n) {
+
+      item.imageWidth=w;
+      item.imageHeight=h;
+
+      if( G.VOM.$imgC !== null && G.VOM.$imgC.children().prop('src') === url ) {
+        ViewerImageSetSize(G.VOM.$imgC, item);
+        G.VOM.$imgC.css('opacity', 1);
+      }
+
+    }
+
+
+      // display image with internal viewer
     function OpenInternalViewer( vomIdx ) {
 
       G.VOM.viewerDisplayed=true;
       jQuery('body').css({overflow:'hidden'});  //avoid scrollbars
 
       G.VOM.$cont=jQuery('<div  class="nGY2 nGY2ViewerContainer" style="opacity:1"></div>').appendTo('body');
-      
+
       SetColorSchemeViewer();
 
-      G.VOM.$viewer=jQuery('<div class="nGY2Viewer" itemscope itemtype="http://schema.org/ImageObject"></div>').appendTo(G.VOM.$cont);
+      G.VOM.$viewer=jQuery('<div class="nGY2Viewer" style="opacity:0" itemscope itemtype="http://schema.org/ImageObject"></div>').appendTo(G.VOM.$cont);
 
-// avoid pinch zoom
-G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});      
-// TODO -> check if still required?
+      // avoid pinch zoom
+      // TODO -> check if still required?
+      G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
 
-      
       var sImg='',
       l=G.I.length;
-      sImg+='<div class="nGY2ViewerImagePan"><img class="nGY2ViewerImage" src="'+G.VOM.Item(GetPreviousImageIdx(vomIdx)).responsiveURL()+'" alt=" " itemprop="contentURL"></div>';
+
+      sImg+='<div class="nGY2ViewerImagePan"><img class="nGY2ViewerImage" src="'+G.VOM.ItemPrevious(vomIdx).responsiveURL()+'" alt=" " itemprop="contentURL"></div>';
       sImg+='<div class="nGY2ViewerImagePan"><img class="nGY2ViewerImage" src="'+G.VOM.Item(vomIdx).responsiveURL()+'" alt=" " itemprop="contentURL"></div>';
-      sImg+='<div class="nGY2ViewerImagePan"><img class="nGY2ViewerImage" src="'+G.VOM.Item(GetNextImageIdx(vomIdx)).responsiveURL()+'" alt=" " itemprop="contentURL"></div>';
+      sImg+='<div class="nGY2ViewerImagePan"><img class="nGY2ViewerImage" src="'+G.VOM.ItemNext(vomIdx).responsiveURL()+'" alt=" " itemprop="contentURL"></div>';
       var sNav='';
       if( G.O.icons.viewerImgPrevious != undefined && G.O.icons.viewerImgPrevious != '') {
         sNav+='<div class="nGY2ViewerAreaPrevious ngy2viewerToolAction" data-ngy2action="previous">'+G.O.icons.viewerImgPrevious+'</div>';
@@ -6772,14 +7196,21 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
       G.VOM.$imgP=G.VOM.$content.find('.nGY2ViewerImagePan').eq(0);
       G.VOM.$imgC=G.VOM.$content.find('.nGY2ViewerImagePan').eq(1);
       G.VOM.$imgN=G.VOM.$content.find('.nGY2ViewerImagePan').eq(2);
-      
+      G.VOM.ImageLoader.loadImage(VieweImgSizeRetrieved, G.VOM.Item(vomIdx).responsiveURL(), G.VOM.Item(vomIdx));
+      G.VOM.ImageLoader.loadImage(VieweImgSizeRetrieved, G.VOM.ItemPrevious(vomIdx).responsiveURL(), G.VOM.ItemPrevious(vomIdx));
+      G.VOM.ImageLoader.loadImage(VieweImgSizeRetrieved, G.VOM.ItemNext(vomIdx).responsiveURL(), G.VOM.ItemNext(vomIdx));
+
+      ViewerDisplayDominantColors(G.VOM.Item(vomIdx), G.VOM.$imgC.children());
+      ViewerDisplayDominantColors(G.VOM.ItemPrevious(vomIdx), G.VOM.$imgP.children());
+      ViewerDisplayDominantColors(G.VOM.ItemNext(vomIdx), G.VOM.$imgN.children());
+
       // makes content unselectable --> avoid image drag effect during 'mouse swipe'
       G.VOM.$cont.find('*').attr('draggable', 'false').attr('unselectable', 'on');
-      
+
       G.VOM.padding.H=parseInt(G.VOM.$content.css("padding-left"))+parseInt(G.VOM.$content.css("padding-right"));
       G.VOM.padding.V=parseInt(G.VOM.$content.css("padding-top"))+parseInt(G.VOM.$content.css("padding-bottom"));
-     
-      
+
+
       // build image toolbar container
       var vtbBg1='';
       var vtbBg2=' toolbarBackground';
@@ -6799,14 +7230,14 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
       var sTB='<div class="toolbarContainer nGEvent'+vtbBg1+'" style="visibility:'+(G.O.viewerToolbar.display ? "visible" : "hidden")+';'+vtbAlign+'"><div class="toolbar nGEvent'+vtbBg2+'">';
       sTB+='</div></div>';
       G.VOM.$toolbar=jQuery(sTB).appendTo(G.VOM.$viewer);
-      
+
       if( G.VOM.toolbarMode == 'min' || (G.O.viewerToolbar.autoMinimize > 0 && G.O.viewerToolbar.autoMinimize >= getViewport().w) ) {
         ViewerToolbarForVisibilityMin();
       }
       else {
         ViewerToolbarForVisibilityStd();
       }
-      
+
       // top-left toolbar
       if( G.O.viewerTools.topLeft != '' ) {
         var sTopLeft='<div class="nGY2ViewerToolsTopLeft nGEvent"><div class="toolbar nGEvent">';
@@ -6828,14 +7259,9 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
         G.VOM.$toolbarTR=jQuery(sTopRight).appendTo(G.VOM.$viewer);
       }
 
-      
       // Go to fullscreen mode
-      if( G.supportFullscreenAPI ) {
-        if( G.O.viewerFullscreen ) {
-          G.VOM.viewerIsFullscreen=true;
-          G.VOM.$viewer.find('.ngy2viewerToolAction').find('.fullscreenButton').html(G.O.icons.viewerFullscreenOn);
-          ngscreenfull.request();
-        }
+      if( ngscreenfull.enabled && G.O.viewerFullscreen ) {
+        ngscreenfull.request();
       }
 
       // set the events handler for toolbars
@@ -6848,24 +7274,42 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
 
       setElementOnTop('', G.VOM.$viewer);
       ResizeInternalViewer(true);
-
       G.VOM.timeImgChanged=new Date().getTime();
+
+
+      var tweenable = new NGTweenable();
+      tweenable.tween({
+        from:         { opacity: 0 },
+        to:           { opacity: 1 },
+        delay:        0,
+        duration:     500,
+        easing:       'easeOutQuart',
+        step:         function (state) {
+          G.VOM.$viewer.css('opacity', state.opacity);
+        }
+      });
 
       // stop click propagation on image ==> if the user clicks outside of an image, the viewer is closed
       G.VOM.$viewer.find('img').on('click', function (e) {
         e.stopPropagation();
       });
-      
+
       ImageSwipeTranslateX(G.VOM.swipePosX);
       DisplayInternalViewer(vomIdx, '');
 
       // viewer gesture handling
       if( G.VOM.hammertime == null ) {
-      
-        G.VOM.hammertime =  new NGHammer(G.VOM.$cont[0]);
-     
-        G.VOM.hammertime.get('pan').set({ direction: NGHammer.DIRECTION_ALL });        
-        G.VOM.hammertime.get('pinch').set({ enable: true });        
+
+        // G.VOM.hammertime =  new NGHammer(G.VOM.$cont[0]);
+        G.VOM.hammertime =  new NGHammer.Manager(G.VOM.$cont[0], {
+          recognizers: [
+            [NGHammer.Pinch, { enable: true }],
+            [NGHammer.Pan, { direction: NGHammer.DIRECTION_ALL }]
+          ]
+        });
+
+        // G.VOM.hammertime.get('pan').set({ direction: NGHammer.DIRECTION_ALL });
+        // G.VOM.hammertime.get('pinch').set({ enable: true });
 
         G.VOM.hammertime.on('pan', function(ev) {
           if( !G.VOM.viewerDisplayed ) { return; }
@@ -6896,14 +7340,38 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
             ImageSwipeTranslateX(0);
           }
         });
-        
+
         if( G.O.viewerZoom ) {
-          // double tap event only if zoom-feature is activated
+
+          G.VOM.hammertime.add( new NGHammer.Tap({ event: 'doubletap', taps: 2 }) );
+          G.VOM.hammertime.add( new NGHammer.Tap({ event: 'singletap' }) );
+          G.VOM.hammertime.get('doubletap').recognizeWith('singletap');
+          G.VOM.hammertime.get('singletap').requireFailure('doubletap');
+
+          // single tap -> next/previous image
+          G.VOM.hammertime.on('singletap', function(ev) {
+            if( !G.VOM.viewerDisplayed ) { return; }
+            StopPropagationPreventDefault(ev.srcEvent);
+            if( G.VOM.toolbarsDisplayed == false ) {
+              ViewerToolsUnHide();
+            }
+            else {
+              if( ev.target.className.indexOf('nGY2ViewerImage') !== -1 ) {
+                if( ev.srcEvent.pageX < (jQuery(window).width()/2) ) {
+                  DisplayPreviousImage();
+                }
+                else {
+                  DisplayNextImage();
+                }
+              }
+            }
+          });
+
+          // double tap -> zoom
           G.VOM.hammertime.on('doubletap', function(ev) {
             if( !G.VOM.viewerDisplayed ) { return; }
-            ev.srcEvent.stopPropagation();
-            ev.srcEvent.preventDefault();
-            
+            StopPropagationPreventDefault(ev.srcEvent);
+
             if( ev.target.className.indexOf('nGY2ViewerImage') !== -1 ) {
               // double tap only one image
               if( G.VOM.isZooming ) {
@@ -6919,7 +7387,7 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
               }
             }
           });
-        
+
           G.VOM.hammertime.on('pinchend', function(ev) {
             ev.srcEvent.stopPropagation();
             ev.srcEvent.preventDefault();  // cancel  mouseenter event
@@ -6928,7 +7396,7 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
           G.VOM.hammertime.on('pinch', function(ev) {
             ev.srcEvent.stopPropagation();
             ev.srcEvent.preventDefault();  // cancel  mouseenter event
-            
+
             if( ViewerZoomStart() ) {
               G.VOM.currentZoom=ev.scale;
               if( G.VOM.currentZoom > 2 ) {
@@ -6943,140 +7411,171 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
             }
           });
         }
+        else {
+          // no zoom -> click/tap on image to go to next/previous one
+          G.VOM.hammertime.on('tap', function(ev) {
+            if( !G.VOM.viewerDisplayed ) { return; }
+            StopPropagationPreventDefault(ev.srcEvent);
+            if( ev.target.className.indexOf('nGY2ViewerImage') !== -1 ) {
+              if( ev.srcEvent.pageX < (jQuery(window).width()/2) ) {
+                DisplayPreviousImage();
+              }
+              else {
+                DisplayNextImage();
+              }
+            }
+          });
+        }
       }
 
-      
+
       if( G.O.slideshowAutoStart ) {
         G.VOM.playSlideshow=false;
         SlideshowToggle();
       }
     }
 
-    function ViewerToolsOn() {
-      // removes all events
-      G.VOM.$viewer.off("touchstart click", '.ngy2viewerToolAction', ViewerToolsAction); 
-      
-      // action button
-      G.VOM.$viewer.on("touchstart click", '.ngy2viewerToolAction', ViewerToolsAction); 
+
+    function StopPropagationPreventDefault(e) {
+      e.stopPropagation();
+      e.preventDefault();
     }
 
-      // Actions of the buttton/elements
-      function ViewerToolsAction(e) {
-        var $this=$(this);
-        var ngy2action=$this.data('ngy2action');
-        switch( ngy2action ) {
-          case 'next':
-            e.stopPropagation();
-            e.preventDefault();
-            DisplayNextImage();
-            break;
-          case 'previous':
-            e.stopPropagation();
-            e.preventDefault();
-            DisplayPreviousImage();
-            break;
-          case 'playPause':
-            e.stopPropagation();
-            SlideshowToggle();
-            break;
-          case 'zoomIn':
-            e.stopPropagation();
-            e.preventDefault();
-            if( ViewerZoomStart() ) {
-              ViewerZoomIn( true );
-            }
-            break;
-          case 'zoomOut':
-            e.stopPropagation();
-            e.preventDefault();
-            if( ViewerZoomStart() ) {
-              ViewerZoomIn( false );
-            }
-            break;
-          case 'minimize':
-            // toggle toolbar visibility
-            e.stopPropagation();
-            e.preventDefault();
-            if( G.VOM.toolbarMode == 'std' ) {
-              ViewerToolbarForVisibilityMin();
-            }
-            else {
-              ViewerToolbarForVisibilityStd();
-            }
-            break;
-          case 'fullScreen':
-            // Toggle viewer fullscreen mode on/off
-            e.stopPropagation();
-            if( G.supportFullscreenAPI ) {
-              if( ngscreenfull.enabled ) {
-                ngscreenfull.toggle();
-                if( G.VOM.viewerIsFullscreen ) {
-                  G.VOM.viewerIsFullscreen=false;
-                  G.VOM.$viewer.find('.fullscreenButton').html(G.O.icons.viewerFullscreenOff);
-                }
-                else {
-                  G.VOM.viewerIsFullscreen=true;
-                  G.VOM.$viewer.find('.fullscreenButton').html(G.O.icons.viewerFullscreenOn);
-                }
-              }
-            }
-            break;
-          case 'info':
-            e.stopPropagation();
-            // if( typeof G.O.fnViewerInfo == 'function' ) {
-              // G.O.fnViewerInfo(G.VOM.Item(G.VOM.currItemIdx), ExposedObjects());
-            // }
-            ItemDisplayInfo(G.VOM.Item(G.VOM.currItemIdx));
-            break;
-          case 'close':
-            e.stopPropagation();
-            e.preventDefault();
-            if( (new Date().getTime()) - G.VOM.timeImgChanged < 400 ) { return; }
-            CloseInternalViewer(G.VOM.currItemIdx);
-            break;
-          case 'download':
-            e.stopPropagation();
-            e.preventDefault();
-            DownloadImage(G.VOM.items[G.VOM.currItemIdx].imageIdx);
-            break;
-          case 'share':
-            e.stopPropagation();
-            e.preventDefault();
-            PopupShare(G.VOM.items[G.VOM.currItemIdx].imageIdx);
-            break;
-          case 'custom':
-            e.stopPropagation();
-            e.preventDefault();
-            PopupShare(G.VOM.items[G.VOM.currItemIdx].imageIdx);
-            break;
-          case 'linkOriginal':
-            // $closeB.on( (G.isIOS ? "touchstart" : "click") ,function(e){     // IPAD
-            e.stopPropagation();
-            e.preventDefault();
-            OpenOriginal( G.VOM.Item(G.VOM.currItemIdx) );
-            if( G.O.kind == 'google' || G.O.kind == 'google2') {
-              var sU='https://plus.google.com/photos/'+G.O.userID+'/albums/'+G.VOM.Item(G.VOM.currItemIdx).albumID+'/'+G.VOM.Item(G.VOM.currItemIdx).GetID();
-              window.open(sU,'_blank');
-            }
-            
-            if( G.O.kind == 'flickr') {
-              var sU='https://www.flickr.com/photos/'+G.O.userID+'/'+G.VOM.Item(G.VOM.currItemIdx).GetID();
-              window.open(sU,'_blank');
-            }
-            break;
-        }
-        
-        // custom button
-        if( ngy2action.indexOf('custom') == 0  && typeof G.O.fnImgToolbarCustClick == 'function') {
-          // var n=ngy2action.substring(6);
+    function ViewerToolsHide() {
+      if( G.VOM.viewerDisplayed ) {
+        G.VOM.toolbarsDisplayed=false;
+        G.VOM.$toolbar.css('opacity', 0);
+        G.VOM.$toolbarTL.css('opacity', 0);
+        G.VOM.$toolbarTR.css('opacity', 0);
+        G.VOM.$content.find('.nGY2ViewerAreaNext').css('opacity', 0);
+        G.VOM.$content.find('.nGY2ViewerAreaPrevious').css('opacity', 0);
+      }
+    }
+
+    function ViewerToolsUnHide() {
+      if( G.VOM.viewerDisplayed ) {
+        G.VOM.toolbarsDisplayed=true;
+        G.VOM.$toolbar.css('opacity', 1);
+        G.VOM.$toolbarTL.css('opacity', 1);
+        G.VOM.$toolbarTR.css('opacity', 1);
+        G.VOM.$content.find('.nGY2ViewerAreaNext').css('opacity', 1);
+        G.VOM.$content.find('.nGY2ViewerAreaPrevious').css('opacity', 1);
+        G.VOM.toolsHide();
+      }
+    }
+
+
+    function ViewerToolsOn() {
+      // removes all events
+      G.VOM.$viewer.off("touchstart click", '.ngy2viewerToolAction', ViewerToolsAction);
+
+      // action button
+      G.VOM.$viewer.on("touchstart click", '.ngy2viewerToolAction', ViewerToolsAction);
+    }
+
+    // Actions of the buttton/elements
+    function ViewerToolsAction(e) {
+      // delay to avoid twice handling on smartphone/tablet (both touchstart click events are fired)
+      if( (new Date().getTime()) - G.timeLastTouchStart < 300 ) { return; }
+      G.timeLastTouchStart=new Date().getTime();
+
+      var $this=$(this);
+      var ngy2action=$this.data('ngy2action');
+      if( ngy2action == undefined ) { return; }
+      switch( ngy2action ) {
+        case 'next':
+          StopPropagationPreventDefault(e);
+          DisplayNextImage();
+          break;
+        case 'previous':
+          StopPropagationPreventDefault(e);
+          DisplayPreviousImage();
+          break;
+        case 'playPause':
+          e.stopPropagation();
+          SlideshowToggle();
+          break;
+        case 'zoomIn':
+          StopPropagationPreventDefault(e);
+          if( ViewerZoomStart() ) {
+            ViewerZoomIn( true );
+          }
+          break;
+        case 'zoomOut':
+          StopPropagationPreventDefault(e);
+          if( ViewerZoomStart() ) {
+            ViewerZoomIn( false );
+          }
+          break;
+        case 'minimize':
+          // toggle toolbar visibility
+          StopPropagationPreventDefault(e);
+          if( G.VOM.toolbarMode == 'std' ) {
+            ViewerToolbarForVisibilityMin();
+          }
+          else {
+            ViewerToolbarForVisibilityStd();
+          }
+          break;
+        case 'fullScreen':
+          // Toggle viewer fullscreen mode on/off
+          e.stopPropagation();
+          if( ngscreenfull.enabled ) {
+            ngscreenfull.toggle();
+          }
+          break;
+        case 'info':
+          e.stopPropagation();
+          ItemDisplayInfo(G.VOM.Item(G.VOM.currItemIdx));
+          break;
+        case 'close':
+          StopPropagationPreventDefault(e);
+          if( (new Date().getTime()) - G.VOM.timeImgChanged < 400 ) { return; }
+          CloseInternalViewer(G.VOM.currItemIdx);
+          break;
+        case 'download':
+          StopPropagationPreventDefault(e);
+          DownloadImage(G.VOM.items[G.VOM.currItemIdx].imageIdx);
+          break;
+        case 'share':
+          StopPropagationPreventDefault(e);
+          PopupShare(G.VOM.items[G.VOM.currItemIdx].imageIdx);
+          break;
+        case 'custom':
+          StopPropagationPreventDefault(e);
+          PopupShare(G.VOM.items[G.VOM.currItemIdx].imageIdx);
+          break;
+        case 'linkOriginal':
+          // $closeB.on( (G.isIOS ? "touchstart" : "click") ,function(e){     // IPAD
+          StopPropagationPreventDefault(e);
+          OpenOriginal( G.VOM.Item(G.VOM.currItemIdx) );
+          if( G.O.kind == 'google' || G.O.kind == 'google2') {
+            var sU='https://plus.google.com/photos/'+G.O.userID+'/albums/'+G.VOM.Item(G.VOM.currItemIdx).albumID+'/'+G.VOM.Item(G.VOM.currItemIdx).GetID();
+            window.open(sU,'_blank');
+          }
+
+          if( G.O.kind == 'flickr') {
+            var sU='https://www.flickr.com/photos/'+G.O.userID+'/'+G.VOM.Item(G.VOM.currItemIdx).GetID();
+            window.open(sU,'_blank');
+          }
+          break;
+      }
+
+      // custom button
+      if( ngy2action.indexOf('custom') == 0  && G.O.fnImgToolbarCustClick !== null ) {
+        if( typeof G.O.fnImgToolbarCustClick == 'function' ) {
           G.O.fnImgToolbarCustClick(ngy2action, $this, G.VOM.Item(G.VOM.currItemIdx));
         }
-        
+        else {
+          // defined in markup
+          window[G.O.fnImgToolbarCustClick](ngy2action, $this, G.VOM.Item(G.VOM.currItemIdx));
+        }
       }
-      
+    }
 
 
-    
+
+
     // Display photo infos
     //function ViewerInfoSet() {
     function ItemDisplayInfo( item) {
@@ -7114,15 +7613,15 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
       if( item.exif.location != '' ) {
         content+='<div class="nGY2PopupOneItemText">'+G.O.icons.location+' <a href="http://maps.google.com/maps?z=12&t=m&q='+encodeURIComponent(item.exif.location)+'" target="_blank">'+item.exif.location+'</a></div>';
         // embed google map in iframe (no api key needed)
-        content+='<iframe width="300" height="150" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?&amp;t=m&amp;q='+encodeURIComponent( item.exif.location ) +'&amp;output=embed"></iframe>';  
+        content+='<iframe width="300" height="150" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?&amp;t=m&amp;q='+encodeURIComponent( item.exif.location ) +'&amp;output=embed"></iframe>';
       }
 
       var $popup=Popup(G.O.icons.viewerInfo, content, 'Left');
-    
-    }
-    
 
-    
+    }
+
+
+
     function ToolbarAddElt( elt ) {
       var r='',
       e=elt.replace(/^\s+|\s+$/g, '');    // remove trailing/leading whitespace
@@ -7153,9 +7652,11 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
           r='<div class="ngbt ngy2viewerToolAction nGEvent" data-ngy2action="zoomIn">'+G.O.icons.viewerZoomIn+'</div><div class="ngbt ngy2viewerToolAction nGEvent" data-ngy2action="zoomOut">'+G.O.icons.viewerZoomOut+'</div>';
           break;
         case 'fullscreenButton':
-          if( G.supportFullscreenAPI ) {
-            r='<div class="ngbt ngy2viewerToolAction setFullscreenButton fullscreenButton nGEvent" data-ngy2action="fullScreen">'+G.O.icons.viewerFullscreenOn+'</div>';
+          var s=G.O.icons.viewerFullscreenOn;
+          if( ngscreenfull.enabled && G.VOM.viewerIsFullscreen ) {
+            s=G.O.icons.viewerFullscreenOff;
           }
+          r='<div class="ngbt ngy2viewerToolAction setFullscreenButton fullscreenButton nGEvent" data-ngy2action="fullScreen">'+s+'</div>';
           break;
         case 'infoButton':
           // if( typeof G.O.fnViewerInfo == 'function' ) {
@@ -7180,9 +7681,15 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
           // custom button
           if( e.indexOf('custom') == 0 ) {
             var t='';
-            if( typeof G.O.fnImgToolbarCustInit == 'function' ) {
-              // content to display from custom script
-              t=G.O.fnImgToolbarCustInit(e);
+            // content to display from custom script
+            if( G.O.fnImgToolbarCustInit !== null ) {
+              if( typeof G.O.fnImgToolbarCustInit == 'function' ) {
+                G.O.fnImgToolbarCustInit(e);
+              }
+              else {
+                // defined in markup
+                window[G.O.fnImgToolbarCustInit](e);
+              }
             }
             if( t == undefined || t == '' ) {
               // content from icons
@@ -7195,7 +7702,7 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
         }
       return r;
     }
-    
+
     function ViewerZoomStart() {
       if( G.O.viewerZoom && !G.VOM.viewerImageIsChanged ) {
       var item=G.VOM.Item(G.VOM.currItemIdx);
@@ -7210,7 +7717,7 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
         }
       }
     }
-          
+
     function ViewerZoomIn( zoomIn ) {
       if( zoomIn ) {
         // zoom in
@@ -7231,12 +7738,11 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
 
 
     function ViewerZoomApply() {
-          
+
       // var curZ=G.VOM.currentZoom;
-        var item=G.VOM.Item(G.VOM.currItemIdx);
+      var item=G.VOM.Item(G.VOM.currItemIdx);
         // if( item.imageHeight > 0 && item.imageWidth > 0 ) {
 
-      
       var imageCurrentHeight=(item.imageHeight/window.devicePixelRatio) * G.VOM.currentZoom;
       var imageCurrentWidth=(item.imageWidth/window.devicePixelRatio) * G.VOM.currentZoom;
       G.VOM.$imgC.children().eq(0).css( {'height': imageCurrentHeight, 'max-height': 'none' });
@@ -7259,7 +7765,7 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
       ResizeInternalViewer(true);
     }
 
-    
+
     // toggle slideshow mode on/off
     function SlideshowToggle(){
       if( G.VOM.playSlideshow ) {
@@ -7276,7 +7782,7 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
 
     function ViewerToolbarForVisibilityStd() {
       G.VOM.toolbarMode='std';
-      
+
       var sTB='';
       var t = G.O.viewerToolbar.standard.split(',');
       for( var i=0, lt=t.length; i<lt; i++) {
@@ -7285,7 +7791,7 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
       G.VOM.$toolbar.find('.toolbar').html(sTB);
       ViewerToolbarElementContent();
     }
-    
+
     function ViewerToolbarForVisibilityMin() {
       if( G.O.viewerToolbar.minimized == undefined || G.O.viewerToolbar.minimized == '' ) {
         ViewerToolbarForVisibilityStd();
@@ -7301,14 +7807,14 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
         ViewerToolbarElementContent();
       }
     }
-    
+
     function ViewerToolbarElementContent() {
-    
+
       var vomIdx=G.VOM.currItemIdx;
       if( vomIdx == null ) { return; }
-      
+
       var item=G.VOM.Item(vomIdx);
-    
+
       // LABEL
       var setTxt=false;
       // set title
@@ -7327,35 +7833,42 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
       else {
         G.VOM.$viewer.find('.ngy2viewerToolAction').find('.description').html('');
       }
-      
+
       if( setTxt ) {
         G.VOM.$viewer.find('.ngy2viewerToolAction').find('.label').show();
       }
       else {
         G.VOM.$viewer.find('.ngy2viewerToolAction').find('.label').hide();
       }
-      
+
       // set page number
       var viewerMaxImages=G.VOM.items.length;
       if( viewerMaxImages > 0 ) {
         G.VOM.$viewer.find('.pageCounter').html((G.VOM.items[vomIdx].imageNumber)+'/'+viewerMaxImages);
       }
-      
+
       // custom elements
       var $cu=G.VOM.$viewer.find('.ngy2CustomBtn');
-      if( $cu.length > 0 && typeof G.O.fnImgToolbarCustDisplay == 'function' ) {
-        G.O.fnImgToolbarCustDisplay( $cu, item);
+      if( $cu.length > 0 && G.O.fnImgToolbarCustDisplay !== null ) {
+        if( typeof G.O.fnImgToolbarCustDisplay == 'function' ) {
+          G.O.fnImgToolbarCustDisplay($cu, item);
+        }
+        else {
+          // defined in markup
+          window[G.O.fnImgToolbarCustDisplay]($cu, item);
+        }
       }
-      
+
       // set event handlers again
       ViewerToolsOn();
     }
-    
+
     // Scroll the image in the lightbox (left/right)
     function ImageSwipeTranslateX( posX ) {
       G.VOM.swipePosX=posX;
       if( G.CSStransformName == null ) {
-        G.VOM.$imgC.css({ left: posX }); 
+        // no pan if CSS transform not supported
+        // G.VOM.$imgC.css({ left: posX });
       }
       else {
         G.VOM.$imgC[0].style[G.CSStransformName]= 'translateX('+posX+'px)';
@@ -7364,7 +7877,8 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
             var $new=G.VOM.$imgP;
             // var dir=getViewport().w;
             var dir=G.VOM.$viewer.width();
-            G.VOM.$imgP.css({visibility:'visible', left:0, opacity:1});
+            // G.VOM.$imgP.css({visibility:'visible', left:0, opacity:1});
+            G.VOM.$imgP.css({visibility:'visible', opacity:1});
             G.VOM.$imgP[0].style[G.CSStransformName]= 'translateX('+(-dir+posX)+'px) '
             G.VOM.$imgN[0].style[G.CSStransformName]= 'translateX('+(-dir)+'px) '
           }
@@ -7372,23 +7886,24 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
             var $new=G.VOM.$imgN;
             // var dir=-getViewport().w;
             var dir=-G.VOM.$viewer.width();
-            G.VOM.$imgN.css({visibility:'visible', left:0, opacity:1});
+            // G.VOM.$imgN.css({visibility:'visible', left:0, opacity:1});
+            G.VOM.$imgN.css({visibility:'visible', opacity:1});
             G.VOM.$imgN[0].style[G.CSStransformName]= 'translateX('+(-dir+posX)+'px) '
             G.VOM.$imgP[0].style[G.CSStransformName]= 'translateX('+(-dir)+'px) '
           }
         }
       }
     }
-    
+
     // Display next image
     function DisplayNextImage() {
       if( G.VOM.viewerImageIsChanged ) { return; }
       if( (new Date().getTime()) - G.VOM.timeImgChanged < 300 ) { return; }
-      
+
       TriggerCustomEvent('lightboxNextImage');
-      DisplayInternalViewer(GetNextImageIdx(G.VOM.currItemIdx), 'nextImage');
+      DisplayInternalViewer(G.VOM.IdxNext(G.VOM.currItemIdx), 'nextImage');
     };
-    
+
     // Display previous image
     function DisplayPreviousImage() {
       if( G.VOM.viewerImageIsChanged ) { return; }
@@ -7396,186 +7911,199 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
       if( G.VOM.playSlideshow ) {
         SlideshowToggle();
       }
-      
+
       TriggerCustomEvent('lightboxPreviousImage');
-      DisplayInternalViewer(GetPreviousImageIdx(G.VOM.currItemIdx), 'previousImage');
+      DisplayInternalViewer(G.VOM.IdxPrevious(G.VOM.currItemIdx), 'previousImage');
     };
-    
+
     // Display image (and run animation)
     function DisplayInternalViewer( vomIdx, displayType ) {
-      
+
       G.VOM.$imgC.children().eq(0).unbind('.imagesLoaded');
       if( G.VOM.playSlideshow ) {
         window.clearTimeout(G.VOM.playSlideshowTimerID);
       }
 
+      var item=G.VOM.Item(G.VOM.currItemIdx);
+      var itemNew=G.VOM.Item(vomIdx);
+      var $new=(displayType == 'nextImage' ? G.VOM.$imgN : G.VOM.$imgP);
+
       G.VOM.timeImgChanged=new Date().getTime();
       G.VOM.viewerImageIsChanged=true;
       G.VOM.isZooming=false;
       ResizeInternalViewer(true);
- 
+
       var displayNext=true;
 
-      SetLocationHash( G.VOM.Item(vomIdx).albumID, G.VOM.Item(vomIdx).GetID() );
-      
-      
-      if( G.O.debugMode && console.timeline ) {
-        console.timeline('nanogallery2_viewer');
-      }
+      if( G.O.debugMode && console.timeline ) { console.timeline('nanogallery2_viewer'); }
 
       G.VOM.currItemIdx=vomIdx;
       var vP=getViewport();
-      
+
+      SetLocationHash( itemNew.albumID, itemNew.GetID() );
+
       if( displayType == '' ) {
         // first image --> just appear / no slide animation
-        G.VOM.$imgC.css({ opacity:1, left:0, visibility: 'visible'});
-        var tweenable = new NGTweenable();
-        tweenable.tween({
-          from:       { scale: 0.8, opacity:0  },
-          to:         { scale: 1, opacity:1 },
-          attachment: { idx:vomIdx, dT:displayType },
-          easing: 'easeInOutSine',
-          duration: 400,
-          step: function (state, att) {
-            G.VOM.$content.css( G.CSStransformName , 'scale('+state.scale+')').css('opacity',state.opacity);
-          },
-          finish: function (state, att) {
-            G.VOM.$content.css( G.CSStransformName , '').css('opacity',1);
-            DisplayInternalViewerComplete(att.idx, att.dT);
-          }
-        });
+        G.VOM.$imgC.css({ opacity:1, visibility: 'visible'});
+        if( G.CSStransformName == null ) {
+          // no CSS transform support -> no animation
+          $new.css({ opacity: 1, visibility: 'visible'});
+          DisplayInternalViewerComplete(vomIdx,displayType);
+        }
+        else {
+          $new.css({ opacity:0, visibility:'visible'});
+          var tweenable = new NGTweenable();
+          tweenable.tween({
+            from:         { scale: 0.8, opacity: 0 },
+            to:           { scale: 1,   opacity: 1 },
+            attachment:   { idx: vomIdx, dT: displayType, item: item },
+            easing:       'easeInOutSine',
+            duration:     400,
+            step:         function (state, att) {
+              // using scale is not a good idea on Chrome -> image will be blurred
+              // G.VOM.$content.css( G.CSStransformName, 'scale('+state.scale+')').css('opacity', state.opacity);
+              G.VOM.$content.css('opacity', state.opacity);
+              ViewerImageOpacityOn(G.VOM.$imgC, att.item);
+
+            },
+            finish:       function (state, att) {
+              // G.VOM.$content.css( G.CSStransformName, '').css('opacity', 1);
+              G.VOM.$content.css('opacity', 1);
+              ViewerImageOpacityOn(G.VOM.$imgC, att.item);
+              ViewerToolsUnHide();
+              DisplayInternalViewerComplete(att.idx, att.dT);
+            }
+          });
+        }
       }
       else {
         // animate the image change
-        switch( G.O.imageTransition ) {
-          case 'fade':
+        switch( G.O.imageTransition.toUpperCase() ) {
+          case 'FADE':
             var $new=(displayType == 'nextImage' ? G.VOM.$imgN : G.VOM.$imgP);
             $new.css({ opacity:0, left:0, visibility:'visible'});
             var tweenable = new NGTweenable();
             tweenable.tween({
-              from: { o: 0  },
-              to: { o: 1 },
-              easing: 'easeInOutSine',
+              from:       { o: 0 },
+              to:         { o: 1 },
+              easing:     'easeInOutSine',
               attachment: { idx:vomIdx, dT:displayType, $e:$new },
-              duration: 300,
-              step: function (state, att) {
-                G.VOM.$imgC.css({ opacity: 1-state.o }); 
+              duration:   300,
+              step:       function (state, att) {
+                G.VOM.$imgC.css({ opacity: 1-state.o });
                 att.$e.css({ opacity: state.o });
               },
-              finish: function (state, att) {
+              finish:     function (state, att) {
                 G.VOM.$imgC.css({ opacity: 0 });
                 att.$e.css({ opacity: 1 });
                 DisplayInternalViewerComplete(att.idx, att.dT);
               }
             });
             break;
-            
-          case 'slideBETA':
-            var $new=(displayType == 'nextImage' ? G.VOM.$imgN : G.VOM.$imgP);
-            $new.css({ opacity:1, left:0, visibility:'visible'});
-            if( G.CSStransformName == null ) {
-              // animate LEFT
-              jQuery.when(
-                G.VOM.$imgC.animate({ left: (displayType == 'nextImage' ? -getViewport().w : getViewport().w)+'px', opacity: 0 }, 500), 
-                $new.animate({ opacity: 1 }, 300)
-              ).done(function () {
-                DisplayInternalViewerComplete(vomIdx, displayType);
-              });
-            }
-            else {
-              // animate TRANSLATEX
-              var dir=(displayType == 'nextImage' ? - getViewport().w : getViewport().w);
-              $new[0].style[G.CSStransformName]= 'translateX('+(-dir)+'px) '
-              var from = {v: G.VOM.swipePosX };
-              var to = {v: (displayType == 'nextImage' ? - getViewport().w : getViewport().w)};
-              jQuery(from).animate(to, { duration:500, step: function(currentValue) {
-                  G.VOM.$imgC[0].style[G.CSStransformName]= 'translateX('+currentValue+'px)';
-                  G.VOM.$imgC.css({ opacity: (1-Math.abs(currentValue/dir)) });
-                  $new[0].style[G.CSStransformName]= 'translateX('+(-dir+currentValue)+'px) '
-                }, complete: function() {
-                  G.VOM.$imgC[0].style[G.CSStransformName]= '';
-                  G.VOM.$imgC.css({ opacity:0 });
-                  DisplayInternalViewerComplete(vomIdx, displayType);
-                }
-              });
-            }
-            break;
 
-          case 'swipe':
-            var $new=(displayType == 'nextImage' ? G.VOM.$imgN : G.VOM.$imgP);
-            // if( G.CSStransformName == null || ( G.isIOS && G.IOSversion < 6 ) ) {
+          case 'SWIPE':
             if( G.CSStransformName == null  ) {
-              // animate LEFT
-              $new.css({ opacity:0, left:0, visibility:'visible'});
-              jQuery.when(
-                G.VOM.$imgC.animate({ left: ((displayType == 'nextImage' ? -getViewport().w : getViewport().w)*2)+'px' }, 500), 
-                $new.animate({ opacity: 1 }, 300)
-              ).done(function () {
-                DisplayInternalViewerComplete(vomIdx, displayType);
-              });
+              // no CSS transform support -> no animation
+              $new.css({ opacity: 1, visibility: 'visible' });
+              G.VOM.$imgC.css({ opacity:1 });
+              DisplayInternalViewerComplete(vomIdx, displayType);
             }
             else {
-              // animate using TRANSLATEX
               var dir=(displayType == 'nextImage' ? - vP.w : vP.w);
-              $new.css({ opacity:1, left:0, visibility:'visible'});
+              $new.css({ visibility:'visible'});
               $new[0].style[G.CSStransformName]= 'translateX('+(-dir)+'px) '
               var tweenable = new NGTweenable();
               tweenable.tween({
-                from: { t: G.VOM.swipePosX  },
-                to: { t: (displayType == 'nextImage' ? - vP.w : vP.w) },
-                attachment: { idx:vomIdx, dT:displayType, $e:$new, dir:dir },
-                duration: 300,
-                easing: 'easeInOutSine',
-                step: function (state, att) {
+                from:         { t: G.VOM.swipePosX  },
+                to:           { t: (displayType == 'nextImage' ? - vP.w : vP.w) },
+                attachment:   { idx:vomIdx, dT:displayType, $e:$new, item: item, itemNew: itemNew, dir:dir },
+                duration:     300,
+                easing:       'easeInOutSine',
+                step:         function (state, att) {
+                  // current image
+                  ViewerImageOpacityOn(G.VOM.$imgC, att.item);
                   G.VOM.$imgC[0].style[G.CSStransformName]= 'translateX('+state.t+'px)';
+                  // new image
+                  ViewerImageOpacityOn(att.$e, att.itemNew);
                   att.$e[0].style[G.CSStransformName]= 'translateX('+(-att.dir+state.t)+'px) ';
                 },
-                finish: function (state, att) {
+                finish:       function (state, att) {
+                  // current image
+                  ViewerImageOpacityOn(G.VOM.$imgC, att.item);
                   G.VOM.$imgC[0].style[G.CSStransformName]= '';
+                  // new image
+                  ViewerImageOpacityOn(att.$e, att.itemNew);
                   att.$e[0].style[G.CSStransformName]= '';
                   DisplayInternalViewerComplete(att.idx, att.dT);
                 }
               });
             }
             break;
-            
-          case 'slideAppear':
+
+          case 'SLIDEAPPEAR':
           default:
-            var dir= getViewport().w+'px';
-            var $new=G.VOM.$imgP;
-            if( displayType == 'nextImage' ) {
-              dir='-'+dir;
-              $new=G.VOM.$imgN;
-            }
-            $new.css({ opacity:0, left:0, visibility:'visible'});
-            jQuery.when(
-              G.VOM.$imgC.animate({ left: dir, opacity: 0 }, 500), 
-              $new.animate({ opacity: 1 }, 300)
-            ).done(function () {
-              ImageSwipeTranslateX(0);
+            if( G.CSStransformName == null  ) {
+              // no CSS transform support -> no animation
+              $new.css({ opacity: 1, visibility: 'visible' });
+              G.VOM.$imgC.css({ opacity:1 });
               DisplayInternalViewerComplete(vomIdx, displayType);
-            });
+            }
+            else {
+              var dir=(displayType == 'nextImage' ? - vP.w : vP.w);
+              $new.css({ visibility:'visible'});
+              var tweenable = new NGTweenable();
+              tweenable.tween({
+                from:         { o: 0, t: G.VOM.swipePosX },
+                to:           { o: 1, t: (displayType == 'nextImage' ? - vP.w : vP.w) },
+                attachment:   { idx:vomIdx, dT:displayType, $e:$new, item: item, itemNew: itemNew, dir: dir },
+                duration:     300,
+                easing:       'easeInOutSine',
+                step:         function (state, att) {
+                  // current image - translate
+                  ViewerImageOpacityOn(G.VOM.$imgC, att.item);
+                  G.VOM.$imgC[0].style[G.CSStransformName]= 'translateX('+state.t+'px)';
+                  // new image - opacity
+                  att.$e.css({ opacity: state.o });
+                  ViewerImageSetSize(att.$e, att.itemNew);
+                },
+                finish:       function (state, att) {
+                  // current image
+                  ViewerImageOpacityOn(G.VOM.$imgC, att.item);
+                  G.VOM.$imgC[0].style[G.CSStransformName]= '';
+                  // new image
+                  att.$e.css({ opacity: 1 });
+                  DisplayInternalViewerComplete(att.idx, att.dT);
+                }
+              });
+            }
             break;
         }
       }
     }
-  
+
 
     function DisplayInternalViewerComplete( vomIdx, displayType ) {
+
       ViewerToolbarElementContent();
-      if( G.O.debugMode && console.timeline ) {
-        console.timelineEnd('nanogallery2_viewer');
+      if( G.O.debugMode && console.timeline ) { console.timelineEnd('nanogallery2_viewer'); }
+
+      if( G.O.fnImgDisplayed !== null ) {
+        if( typeof G.O.fnImgDisplayed == 'function' ) {
+          // if( !G.O.fnImgDisplayed(G.VOM.Item(vomIdx)) ) { return; }
+          G.O.fnImgDisplayed(G.VOM.Item(vomIdx));
+        }
+        else {
+          // defined in markup
+          //if( !window[G.O.fnImgDisplayed](G.VOM.Item(vomIdx)) ) { return; }
+          window[G.O.fnImgDisplayed](G.VOM.Item(vomIdx));
+        }
       }
 
-      if( typeof G.O.fnImgDisplayed === 'function'){
-        if( !G.O.fnImgDisplayed(G.VOM.Item(vomIdx).$elt, G.VOM.Item(vomIdx)) ) { return; }
-      }
-      
       G.VOM.swipePosX=0;
-      
+
       G.VOM.$imgC.off("click");
       G.VOM.$imgC.removeClass('imgCurrent');
-    
+
       var $tmp=G.VOM.$imgC;
       switch( displayType ) {
         case 'nextImage':
@@ -7588,90 +8116,73 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
           break;
       }
       G.VOM.$imgC.addClass('imgCurrent');
-      
-      G.VOM.$imgN.css({ opacity:0, left:0, visibility:'hidden' }).attr('src','');
-      G.VOM.$imgN.children().eq(0).attr('src',G.emptyGif).attr('src',G.VOM.Item(GetNextImageIdx(vomIdx)).responsiveURL());
-      G.VOM.$imgP.css({ opacity:0, left:0, visibility:'hidden'}).attr('src','');
-      G.VOM.$imgP.children().eq(0).attr('src',G.emptyGif).attr('src',G.VOM.Item(GetPreviousImageIdx(vomIdx)).responsiveURL());
+      G.VOM.$imgC.css({ opacity: 1 });
+
+      // new next image
+      // G.VOM.$imgN.css({ opacity:0, left:0, visibility:'hidden' }).attr('src','');
+      // G.VOM.$imgN.css({ opacity: 0 }).attr('src', '');
+      G.VOM.$imgN.css({ opacity: 0 });
+      G.VOM.ImageLoader.loadImage(VieweImgSizeRetrieved, G.VOM.ItemNext(vomIdx).responsiveURL(), G.VOM.ItemNext(vomIdx));
+      G.VOM.$imgN.children().eq(0).attr('src', '');
+      G.VOM.$imgN.children().eq(0).attr('src',G.emptyGif).attr('src', G.VOM.ItemNext(vomIdx).responsiveURL());
+      ViewerDisplayDominantColors(G.VOM.ItemNext(vomIdx), G.VOM.$imgN.children());
+
+      // new previous image
+      // G.VOM.$imgP.css({ opacity:0, left:0, visibility:'hidden'}).attr('src', '');
+      // G.VOM.$imgP.css({ opacity: 0 }).attr('src', '');
+      G.VOM.$imgP.css({ opacity: 0 });
+      G.VOM.$imgP.children().eq(0).attr('src', '');
+      G.VOM.ImageLoader.loadImage(VieweImgSizeRetrieved, G.VOM.ItemPrevious(vomIdx).responsiveURL(), G.VOM.ItemPrevious(vomIdx));
+      G.VOM.$imgP.children().eq(0).attr('src',G.emptyGif).attr('src',G.VOM.ItemPrevious(vomIdx).responsiveURL());
+      ViewerDisplayDominantColors(G.VOM.ItemPrevious(vomIdx), G.VOM.$imgP.children());
+
 
       // slideshow mode - wait until image is loaded to start the delay for next image
-      var item=G.VOM.Item(G.VOM.currItemIdx);
-      if( G.VOM.playSlideshow || item.imageHeight == 0 || item.imageWidth == 0) {
-        
+      if( G.VOM.playSlideshow ) {
         G.VOM.$imgC.children().eq(0).ngimagesLoaded().always( function( instance ) {
-          
-          if( item.imageWidth == 0 ) {
-            item.imageWidth=G.VOM.$imgC.children().eq(0).prop('naturalWidth');
-          }
-          if( item.imageHeight == 0 ) {
-            item.imageHeight=G.VOM.$imgC.children().eq(0).prop('naturalHeight');
-          }
-
           if( G.VOM.playSlideshow ) {
             // in the meantime the user could have stopped the slideshow
             G.VOM.playSlideshowTimerID=window.setTimeout( function(){DisplayNextImage(); }, G.VOM.slideshowDelay);
           }
         });
       }
-      
+
       // close viewer when user clicks outside of the image
       G.VOM.$imgC.on("click",function(e){
         e.stopPropagation();
         if( (new Date().getTime()) - G.VOM.timeImgChanged < 400 ) { return; }
-        e.stopPropagation();
-        e.preventDefault();
+        StopPropagationPreventDefault(e);
         CloseInternalViewer(vomIdx);
         return false;
       });
 
       ResizeInternalViewer();
 
-      // TODO: following code does not work
-      //jQuery(G.containerViewerContent).item.$getElt('img').on('resize', function(){ 
-      //  ResizeInternalViewer('.imgCurrent');
-      //  console.log('resized');
-      //});
-
       G.VOM.viewerImageIsChanged=false;
       TriggerCustomEvent('lightboxImageDisplayed');
-      
-    }
-    
 
-    function GetNextImageIdx( vomIdx ) {
-    
-      if( vomIdx == G.VOM.items.length-1 ) {
-        return 0;
-      }
-      else {
-        return vomIdx+1;
-      }
-    
     }
 
-    function GetPreviousImageIdx( vomIdx ) {
-    
-      if( vomIdx == 0 ) {
-        return G.VOM.items.length-1;
-      }
-      else {
-        return vomIdx-1;
+    // display image only when the size is knowed
+    function ViewerImageOpacityOn( $img, item ) {
+      if( $img[0].style.opacity == 0 && item.imageWidth != 0 ) {
+        // display it when the size is knowed
+        ViewerImageSetSize($img, item);
+        $img[0].style.opacity=1;
       }
     }
 
     // Close the internal lightbox
     function CloseInternalViewer( vomIdx ) {
 
-      if( G.VOM.viewerImageIsChanged ) {
-        G.VOM.$content.find('*').stop(true,true);
-        //return;
-      }
       G.VOM.viewerImageIsChanged=false;
 
       if( G.VOM.viewerDisplayed ) {
 
-        ScrollbarSetVisible();        
-        
+        // set scrollbar visible
+        jQuery('body').css({overflow:'visible'});
+
+
         if( G.VOM.playSlideshow ) {
           window.clearTimeout(G.VOM.playSlideshowTimerID);
           G.VOM.playSlideshow=false;
@@ -7682,13 +8193,11 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
         G.VOM.hammertime.destroy();
         G.VOM.hammertime=null;
 
-        if( G.supportFullscreenAPI ) {
-          if( G.VOM.viewerIsFullscreen ) {
-            G.VOM.viewerIsFullscreen=false;
-            ngscreenfull.exit();
-          }
+        if( ngscreenfull.enabled && G.VOM.viewerIsFullscreen ) {
+          G.VOM.viewerIsFullscreen=false;
+          ngscreenfull.exit();
         }
-        
+
         G.VOM.$cont.hide(0).off().show(0).html('').remove();
         G.VOM.viewerDisplayed=false;
 
@@ -7698,6 +8207,7 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
             DisplayAlbum( '', G.VOM.Item(vomIdx).albumID );
           }
           else {
+            GalleryResize();
             SetLocationHash( G.VOM.Item(vomIdx).albumID, '' );
             ThumbnailHoverReInitAll();
           }
@@ -7705,25 +8215,19 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
         G.VOM.timeImgChanged=new Date().getTime();
       }
     }
-    
-    
-    function ScrollbarSetVisible() {
-      //jQuery('body').css({overflow:'initial'});
-     jQuery('body').css({overflow:'visible'});
-    }
-    
 
+    // Internal viewer resized -> reposition elements
     function ResizeInternalViewer( forceUpdate ) {
       forceUpdate = typeof forceUpdate !== 'undefined' ? forceUpdate : false;
-      
+
       // window.requestAnimationFrame( function() {    // synchronize with screen
       var windowsW=G.VOM.$viewer.width();
       var windowsH=G.VOM.$viewer.height();
       var $elt=G.VOM.$imgC.children().eq(0);
       if( $elt == null || G.VOM.currItemIdx == -1 ) { return; }
-      
+
       if( !forceUpdate && G.VOM.window.lastWidth == windowsW  && G.VOM.window.lastHeight == windowsH ) { return; }
-      
+
       G.VOM.window.lastWidth=windowsW;
       G.VOM.window.lastHeight=windowsH;
 
@@ -7768,22 +8272,28 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
         G.VOM.zoomPosY=0;
         G.VOM.$imgC[0].style[G.CSStransformName]= 'translate3D(0,0,0) ';
 
-        
         var maxW=windowsW-G.VOM.padding.H;
+
         var item=G.VOM.Item(G.VOM.currItemIdx);
-        if( item.imageWidth > 0 &&  window.devicePixelRatio > 1 ) {
-          var w=item.imageWidth/window.devicePixelRatio;
-          if( maxW > w ) {
-            maxW=w;
-          }
-        }
-        
-        // G.VOM.$content.find('img').css({'max-width':(windowsW-G.VOM.padding.H), 'max-height':(windowsH-G.VOM.padding.V), 'height':'auto', 'width':'auto' });
-        G.VOM.$content.find('img').css({'max-width':(maxW), 'max-height':(windowsH-G.VOM.padding.V), 'height':'auto', 'width':'auto' });
+        ViewerImageSetSize(G.VOM.$imgC, item);
+        ViewerImageSetSize(G.VOM.$imgN, G.VOM.ItemNext(G.VOM.currItemIdx));
+        ViewerImageSetSize(G.VOM.$imgP, G.VOM.ItemPrevious(G.VOM.currItemIdx));
       }
-      
     }
-    
+
+    function ViewerImageSetSize( $img, item) {
+      var maxW=G.VOM.window.lastWidth-G.VOM.padding.H;
+
+      if( item.imageWidth > 0 &&  window.devicePixelRatio > 1 ) {
+        var w=item.imageWidth/window.devicePixelRatio;
+        if( maxW > w ) {
+          maxW=w;
+        }
+      }
+
+      $img.find('img').css({'max-width':(maxW), 'max-height':(G.VOM.window.lastHeight-G.VOM.padding.V), 'height':'auto', 'width':'auto' });
+    }
+
     // position the image depending on the zoom factor and the pan X/Y position
     function ViewerImageSetPosition(posX, posY, savePosition ) {
 
@@ -7794,54 +8304,15 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
 
       posX+=G.VOM.zoomPosX;
       posY+=G.VOM.zoomPosY;
-    
+
       G.VOM.$imgC[0].style[G.CSStransformName]= 'translate3D('+ posX+'px, '+ posY+'px, 0) ';
     }
 
-    
 
-    function ImageGetSize( item ) {
-    }
-    
-    function ImageGetSize2( item ) {
-      // inspired by code from Dmitry Semenov
-        var counter = 0,
-				img = item.img[0],
-        
-				mfpSetInterval = function(delay) {
-
-					if(_imgInterval) {
-						clearInterval(_imgInterval);
-					}
-					// decelerating interval that checks for size of an image
-					_imgInterval = setInterval(function() {
-						if(img.naturalWidth > 0) {
-							mfp._onImageHasSize(item);
-							return;
-						}
-
-						if(counter > 200) {
-							clearInterval(_imgInterval);
-						}
-
-						counter++;
-						if(counter === 3) {
-							mfpSetInterval(10);
-						} else if(counter === 40) {
-							mfpSetInterval(50);
-						} else if(counter === 100) {
-							mfpSetInterval(500);
-						}
-					}, delay);
-				};
-
-        mfpSetInterval(1);
-    }
-    
     /** @function BuildSkeleton */
     /** Build the gallery structure **/
     function BuildSkeleton() {
-    
+
       // store markup if defined
       var $elements=G.$E.base.children('a');
       if( $elements.length > 0 ) {
@@ -7849,13 +8320,13 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
       }
       G.$E.base.text('');
       G.$E.base.addClass('ngy2_container');
-      
+
       // RTL or LTR
       var sRTL='';
       if( G.O.RTL ) {
         sRTL='style="text-align:right;direction:rtl;"';
       }
-    
+
       // theme
       G.$E.base.addClass(G.O.theme)
       // gallery color scheme
@@ -7871,7 +8342,7 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
       var styleNavigation="";
       if( G.O.navigationFontSize != undefined && G.O.navigationFontSize != '' ) {
         styleNavigation=' style="font-size:'+G.O.navigationFontSize+';"';
-      }      
+      }
       G.$E.conNavigationBar=jQuery('<div class="nGY2Navigationbar" '+styleNavigation+'></div>').appendTo(G.$E.base);
 
       // pre-loader
@@ -7892,7 +8363,7 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
           // G.$E.conNavBCon.css({ 'margin-right':0});
           break;
       }
-      
+
       // apply galleryBuildInit2 css settings to the gallery
       if( G.O.galleryBuildInit2 !== undefined ) {
       var t1=G.O.galleryBuildInit2.split('|');
@@ -7903,7 +8374,7 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
           }
         }
       }
-      
+
       // configure gallery depending on some thumbnail hover effects
       var effects=G.tn.hoverEffects.std.concat(G.tn.hoverEffects.level1);
       for( var j=0; j<effects.length; j++) {
@@ -7925,17 +8396,17 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
             break;
         }
       }
-      
+
       // Gallery bottom container
       G.$E.conTnBottom=jQuery('<div class="nGY2GalleryBottom" '+styleNavigation+'></div>').appendTo(G.$E.conTnParent);
-      
+
       // portable
       if( G.O.portable ) {
         // http://www.picresize.com/
         // http://base64encode.net/base64-image-encoder
         var logo='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB8AAAAWCAYAAAA4oUfxAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QA/wD/AP+gvaeTAAAAB3RJTUUH4QMPBwY6mxZgsAAABTFJREFUSMe1ll9oVGcaxn/fd86ZSWbSkEBMiWNdTTfRxiVbXFiU1bjKGqNexlURKys0tHqXpQZ64Sq4FxKqFy4qFSm9kA1FHNhFISgJqFCd6lL/YC7M3jhrJv5JmGSSMzPnzDnfuxdpZtP4b1vaF154P3gPD+/zPC/nVSKiAQOsBj7O5XK/nZiYeEtELH6iUEqFNTU1U9XV1d8AnwNfA1qJCMCfHz169NcjR45UXL16VWWzWQnD0PxU4JZl6draWtXW1iYHDx4sLlmy5C/AZwRB0JVOpyWRSHhACMjPmOHChQuL6XRagiDoUiIyumvXrpq+vr6obduqs7OTjRvbsbSFUgqUgKjyFG5+mlKpVH6LCMYYRAQRQSmF1hqtNd+xijGGVCpFMpkkCALZuXOn19fXN6Gmp6dNc3NzMDo66nR2dnL+/Hm+Ov933PwUAPHKagqei4gBFNs7dxGPx38U/du2bSOZTNLQ0FB6+PChbWez2WI+n3dEhI3tf+Det0N8de0Imz9YQWHa48u/3afjgxbqEpUM/es/uF8W+fijffi+TywWQ0S4fv06t2/fJpfLsXjxYtauXUtTUxNBECAihGFIJBJh1apVXLhwgXw+r7LZbNGeYU7MLD1BEPCLxkWs+HUT+SmPJY0TvPerd6l/J05YcLCGHWzbxrZtHjx4wP79+7l27dr3Jqyurqarq4ujR49i2zYAWmvCMJyVygCiZ7dh9kOtNb5XopD3KBQ8fL9EseBRyHsUCz6zS3Dnzh3WrVtXBq6oqGDBggUA5HI5jh07xo4dOzDmf0ujVBlGAWjmhTGC41hEow6RiI3j2DgRh0jUxonYWJaFGGHPnj2Mj49jWRYHDhzg7t27DA0NMTAwwOrVqwFIJpOcOHECx3Fe6oEXwG3bYux5ltHHz3mSGePpk+c8yczUI+knVFVVcePmDe7fvw9AT08Pvb29NDc3U1dXx4YNG7h8+TItLS1orTl58iT5fL68Ga8En55yWb6iifff/iPD/0iQGfglG3/zJ6a+beHf/3yH6Mjv+P269Vy5cgWlFDU1NXR3dxOGYdlcnudRVVXFvn37MMaQTqcZHh5+Kbg99zHjSodPuj997cqMjY0hItTW1hKPx9FalzW1LIswDFm0aBEAQRDguu6bJ581hOd5GBNiTEgYhuXa8z1EhIaGBgAymQzpdBqlFKVSiTCc6bcsi5s3bwJQWVlJfX39fMO9XHMAy7LQeibn1o7toJSio6MDAN/36e7uxvd9IpEIlmURjUZJpVKcOXMGpRStra0sXbr0peDfo30+LS+4U2uMMaxcuZLdu3dz7tw5+vv7aWtrY+/evdTX13Pr1i1OnTrF5OQkAIcPH8ayrNeCvx51njTGGE6fPk0mk2FwcJBUKkUqlXqh9/jx42zatKnMzJzhBEArpZT+zjGWZSEiBEHwypzVtbKykosXL3Lo0CEaGxvLpovFYqxZs4ZLly6VJQnDEBEpM6C11kopheu6JpFI+Fpr2bJli/zYGBkZkeHhYZmcnHxlz9atW0VrLYlEwndd19ixWOzx5s2b3z579qzp7+/X7e3ttLa2Yox5QaP5MfenEY1G0VoTBAHFYhFjTJlJrTX37t1jYGAAY4zp6OiQWCz2mCAItj979kyWL1/uAwE/7zERLFu2zH/69KkEQbB99ozaOz4+fqy3t7d2cHAwdF1XKaXe6P7/16AiQjwel/Xr1+uenp6Jurq6T4Av1JwD8j3gQ2BVsVh8S72J8x8QIiIVFRVTQAo4CwwB+r93qCLI9wKZ8AAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAxNy0wMy0xNVQwNzowNjo1OC0wNDowMBNQsyUAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMTctMDMtMTVUMDc6MDY6NTgtMDQ6MDBiDQuZAAAAAElFTkSuQmCC';
         G.$E.ngy2i=jQuery('<div class="nGY2PortInfo"><a href="http://nano.gallery" target="_blank" title="nanogallery2 | easy photo gallery for your website" style="font-weight: bold !important;color: #888 !important;font-size: 11px !important;"><img src="'+logo+'" style="height:16px !important;box-shadow: none !important;vertical-align: middle !important;"/> &nbsp; nanogallery2</a></div>').appendTo(G.$E.base);
-        
+
         G.$E.ngy2i.find('a').on({
           mouseenter: function () {
             jQuery(this).attr('style', 'color: #73A623 !important');
@@ -7945,19 +8416,12 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
           }
         });
       }
-      
+
       // Error console
       G.$E.conConsole=jQuery('<div class="nGY2ConsoleParent"></div>').appendTo(G.$E.base);
 
       // i18n translations
       i18n();
-
-      // fullscreen API support
-      if( document.fullscreenEnabled || document.webkitFullscreenEnabled || document.msFullscreenEnabled || document.mozFullScreenEnabled) {
-        G.supportFullscreenAPI=true;
-      } else {
-        NGY2Tools.NanoConsoleLog(G, 'Your browser does not support the fullscreen API. Fullscreen button will not be displayed.');
-      }
 
       // cache some thumbnails data (sizes, styles...)
       ThumbnailDefCaches();
@@ -7973,9 +8437,9 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
           G.$E.conTn.css('overflow', 'visible');
           break;
       }
-      
+
     }
-    
+
     function TriggerCustomEvent ( eventName ) {
       // G.$E.base.trigger('pageChanged.nanogallery2', new Event('pageChanged.nanogallery2'));
       var eN = eventName + '.nanogallery2';
@@ -7988,28 +8452,27 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
         }
         G.$E.base.trigger(eN, event);
     }
-    
-    
+
+
     /** @function SetGlobalEvents */
     function SetGlobalEvents() {
       // GLOBAL EVENT MANAGEMENT
-      
+
       G.$E.conTnParent.on({
         mouseenter: GalleryMouseEnter,
         mouseleave: GalleryMouseLeave
       }, ".nGY2GThumbnail"); //pass the element as an argument to .on
-      
+
       // G.GOM.hammertime = new NGHammer(G.$E.conTn[0], { touchAction: 'none' });
       G.GOM.hammertime = new NGHammer(G.$E.conTn[0]);
       // G.GOM.hammertime.domEvents = true;
-      
+
       G.GOM.hammertime.on('pan', function(ev) {
         if( G.O.paginationSwipe && G.layout.support.rows && G.galleryDisplayMode.Get() == 'PAGINATION' ) {
           G.$E.conTn.css( G.CSStransformName , 'translateX('+(ev.deltaX)+'px)');
         }
       });
       G.GOM.hammertime.on('panend', function(ev) {
-        // console.log(ev);
         if( G.O.paginationSwipe && G.layout.support.rows && G.galleryDisplayMode.Get() == 'PAGINATION' ) {
           if( Math.abs(ev.deltaY) > 100 ) {
             // user moved vertically -> cancel pagination
@@ -8029,11 +8492,9 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
         }
       });
       G.GOM.hammertime.on('tap', function(ev) {
-        // console.log(ev);
         ev.srcEvent.stopPropagation();
         ev.srcEvent.preventDefault();  // cancel  mouseenter event
 
-        // OpenTouchedThumbnail(ev.target);
         if( ev.pointerType == 'mouse') {
           if( GalleryClicked(ev.srcEvent) == 'exit' ) { return; }
         }
@@ -8045,7 +8506,6 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
             GalleryClicked(ev.srcEvent);
             return;
           }
-          // console.log(r);
           if( G.O.touchAutoOpenDelay > 0 ) {
             // one touch scenario
             ThumbnailHoverOutAll();
@@ -8059,7 +8519,6 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
           else {
             // two touch scenario
             if( !G.I[G.GOM.items[r.GOMidx].thumbnailIdx].hovered ) {
-              // first touch
               ThumbnailHoverOutAll();
               ThumbnailHover(r.GOMidx);
             }
@@ -8070,26 +8529,24 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
           }
         }
       });
-      
-      
-      
-      
-      
+
 
       // browser location hash management
       if( G.O.locationHash ) {
         jQuery(window).bind( 'hashchange', function() {
-          ProcessLocationHash(true);
+          ProcessLocationHash();
         });
       }
-      
+
       // Page resize
       jQuery(window).on('resize.nanogallery2.'+G.baseEltID, debounce( ResizeWindowEvent, 100, false) );
-      
+
       // Event page scrolled
       $(window).on('scroll.nanogallery2.'+G.baseEltID,  debounce( OnScrollEvent, 100, false) );
-      
-      
+
+      // Debounced function to hide the toolbars on the viewer
+      G.VOM.toolsHide=debounce( ViewerToolsHide, G.O.viewerHideToolsDelay, false );
+
       // Keyboard management
       jQuery(document).keyup(function(e) {
         if( G.popup.isDisplayed ) {
@@ -8101,6 +8558,7 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
         }
         else {
           if( G.VOM.viewerDisplayed ) {
+            ViewerToolsUnHide();
             switch( e.keyCode) {
               case 27:    // Esc key
                 CloseInternalViewer(G.VOM.currItemIdx);
@@ -8125,11 +8583,10 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
           }
         }
       });
-      
-      
+
+      // mouse wheel to zoom in/out the image displayed in the internal lightbox
       jQuery(window).bind('mousewheel wheel', function(e){
         if( G.VOM.viewerDisplayed ) {
-        // console.log( e.originalEvent.wheelDelta + ' - ' + e.originalEvent.detail);
           var deltaY = 0;
           e.preventDefault();
 
@@ -8144,8 +8601,32 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
         }
       });
 
+      // mouse mouse -> unhide lightbox toolbars
+      jQuery(window).bind('mousemove', function(e){
+        if( G.galleryResizeEventEnabled ) {
+          ViewerToolsUnHide();
+        }
+      });
+
+      // fullscreen mode on/off --> internal lightbox
+      if( ngscreenfull.enabled ) {
+        // ngscreenfull.onchange(() => {
+        ngscreenfull.onchange( function() {
+          if( G.VOM.viewerDisplayed ) {
+            if( ngscreenfull.isFullscreen ) {
+              G.VOM.viewerIsFullscreen=true;
+              G.VOM.$viewer.find('.fullscreenButton').html(G.O.icons.viewerFullscreenOff);
+            }
+            else {
+              G.VOM.viewerIsFullscreen=false;
+              G.VOM.$viewer.find('.fullscreenButton').html(G.O.icons.viewerFullscreenOn);
+            }
+          }
+        });
+      }
+
     }
-    
+
     //----- Manage browser location hash (deep linking and browser back/forward)
     function ProcessLocationHash() {
 
@@ -8154,34 +8635,41 @@ G.VOM.$viewer.css({msTouchAction:'none', touchAction:'none'});
 
       var curGal='#nanogallery/'+G.baseEltID+'/',
       newLocationHash=location.hash;
-console.log('newLocationHash1: ' +newLocationHash);
-console.log('G.locationHashLastUsed: ' +G.locationHashLastUsed);
-      
+      if( G.O.debugMode ) {
+        console.log('------------------------ PROCESS LOCATION HASH');
+        console.log('newLocationHash1: ' +newLocationHash);
+        console.log('G.locationHashLastUsed: ' +G.locationHashLastUsed);
+      }
+
       if( newLocationHash == '' ) {
-        if( G.GOM.lastDisplayedIdx != -1 ) {
+        // if( G.GOM.lastDisplayedIdx != -1 ) {
+        if( G.locationHashLastUsed !== '' ) {
           // back button and no hash --> display first album
+          if( G.O.debugMode ) { console.log('display root album'  ); }
           G.locationHashLastUsed='';
+          if( G.O.debugMode ) { console.log('new3 G.locationHashLastUsed: '+G.locationHashLastUsed); }
           DisplayAlbum( '', '0');
           return true;
         }
       }
 
       if( newLocationHash == G.locationHashLastUsed ) { return; }
-      
+
       if( newLocationHash.indexOf(curGal) == 0 ) {
         // item IDs detected
         var IDs=parseIDs( newLocationHash.substring(curGal.length) );
         if( IDs.imageID != '0' ) {
-console.log('display: ' + IDs.albumID +'-'+ IDs.imageID );
+          if( G.O.debugMode ) { console.log('display image: ' + IDs.albumID +'-'+ IDs.imageID ); }
           DisplayPhoto( IDs.imageID, IDs.albumID );
           return true;
         }
         else {
+          if( G.O.debugMode ) { console.log('display album: ' + IDs.albumID  ); }
           DisplayAlbum( '-1', IDs.albumID );
           return true;
         }
-      }    
-      
+      }
+
       return false;
     }
 
@@ -8189,7 +8677,11 @@ console.log('display: ' + IDs.albumID +'-'+ IDs.imageID );
     function SetLocationHash(albumID, imageID ) {
       if( !G.O.locationHash ) { return false; }
 
-      if( albumID == '-1' || albumID == '0' ) {
+      if( G.O.debugMode ) {
+        console.log('------------------------ SET LOCATION HASH');
+      }
+
+      if( imageID == '' && (albumID == '-1' || albumID == '0' || G.O.album == albumID ) ) {
         // root album level --> do not set top.location.hash if not already set
         if( location.hash != '' ) {
           // try to clear the hash if set
@@ -8201,21 +8693,26 @@ console.log('display: ' + IDs.albumID +'-'+ IDs.imageID );
           }
         }
         G.locationHashLastUsed='';
+        if( G.O.debugMode ) { console.log('new2 G.locationHashLastUsed: '+G.locationHashLastUsed); }
         return;
       }
-      
+
       var newLocationHash='#'+'nanogallery/'+G.baseEltID+'/'+ albumID;
       if( imageID != '' ) {
         newLocationHash+='/'+imageID;
       }
 
       var lH=location.hash;
-console.log('newLocationHash2: '+newLocationHash);
-console.log('lH: '+lH);
+      if( G.O.debugMode ) {
+        console.log('newLocationHash2: '+newLocationHash);
+        console.log('location.hash: '+lH);
+      }
+
+      G.locationHashLastUsed=newLocationHash;
+      if( G.O.debugMode ) { console.log('new G.locationHashLastUsed: '+G.locationHashLastUsed); }
+
       if(  lH == '' || lH != newLocationHash ) {
         // G.locationHashLastUsed='#'+newLocationHash;
-        G.locationHashLastUsed=newLocationHash;
-        console.log('new G.locationHashLastUsed: '+G.locationHashLastUsed);
         try {
           top.location.hash=newLocationHash;
         }
@@ -8225,8 +8722,8 @@ console.log('lH: '+lH);
         }
       }
     }
-    
-    
+
+
     function ResizeWindowEvent() {
       if( G.VOM.viewerDisplayed ) {
         ResizeInternalViewer();
@@ -8234,8 +8731,8 @@ console.log('lH: '+lH);
       else {
         if( G.galleryResizeEventEnabled ) {
           var nw=RetrieveCurWidth();
-          if( G.GOM.albumIdx != -1 && 
-                ( G.tn.settings.getH() != G.tn.settings.height[G.GOM.curNavLevel][nw] || 
+          if( G.GOM.albumIdx != -1 &&
+                ( G.tn.settings.getH() != G.tn.settings.height[G.GOM.curNavLevel][nw] ||
                 G.tn.settings.getW() != G.tn.settings.width[G.GOM.curNavLevel][nw] ) ) {
             // thumbnail size changed --> render the gallery with the new sizes
             G.GOM.curWidth=nw;
@@ -8249,40 +8746,18 @@ console.log('lH: '+lH);
         }
       }
     }
-    
-    
-    // DEBOUNCE
-    // author: John Hann - http://unscriptable.com/2009/03/20/debouncing-javascript-methods/
-    // execAsap - false means executing at the end of the detection period
-    var debounce = function (func, threshold, execAsap) {
-      var timeout;
-      return function debounced () {
-          var obj = this, args = arguments;
-          function delayed () {
-              if (!execAsap)
-                  func.apply(obj, args);
-              timeout = null; 
-          };
-   
-          if (timeout)
-              clearTimeout(timeout);
-          else if (execAsap)
-              func.apply(obj, args);
-   
-          timeout = setTimeout(delayed, threshold || 100); 
-      };
-    }
 
-    
+
+
+
+
     function OnScrollEvent() {
       if( G.scrollTimeOut ) {
         clearTimeout(G.scrollTimeOut);
       }
-      
+
       G.scrollTimeOut = setTimeout(function () {
-      
-        //console.log('OnScrollEvent');
-      
+
         if( !G.VOM.viewerDisplayed ) {
           if( G.galleryResizeEventEnabled ) {
             GalleryResize();
@@ -8292,7 +8767,7 @@ console.log('lH: '+lH);
       }, 10);
     }
 
-    
+
     // I18N : define text translations
     function i18n() {
 
@@ -8301,15 +8776,15 @@ console.log('lH: '+lH);
       if( G.i18nLang === 'UNDEFINED') { G.i18nLang=''; }
 
       var llang=-('_'+G.i18nLang).length;
-      
+
       if( toType(G.O.i18n) == 'object' ){
-      
+
         for( var key in G.O.i18n ) {
           //var value = G.O.i18n[key];
           var s=key.substr(llang);
           if( s == ('_'+G.i18nLang) ) {
             G.i18nTranslations[key.substr(0,key.length-s.length)]=G.O.i18n[key];
-          } 
+          }
           else {
             G.i18nTranslations[key]=G.O.i18n[key];
           }
@@ -8329,19 +8804,19 @@ console.log('lH: '+lH);
       return s;
     }
 
-    
+
     function RetrieveCurWidth() {
       var vpW= getViewport().w;
-      
+
       if( G.O.breakpointSizeSM > 0 && vpW < G.O.breakpointSizeSM) { return 'xs'; }
       if( G.O.breakpointSizeME > 0 && vpW < G.O.breakpointSizeME) { return 'sm'; }
       if( G.O.breakpointSizeLA > 0 && vpW < G.O.breakpointSizeLA) { return 'me'; }
       if( G.O.breakpointSizeXL > 0 && vpW < G.O.breakpointSizeXL) { return 'la'; }
-      
+
       return 'xl';
     }
 
-    
+
     /** @function browserNotification */
     function browserNotification() {
       var m='Your browser version is not supported anymore. The image gallery cannot be displayed. <br><br>Please update to a more recent one. Download:<br>';
@@ -8384,9 +8859,9 @@ console.log('lH: '+lH);
       eltOS=$elt.offset(),
       th=$elt.outerHeight(true),
       tw=$elt.outerWidth(true);
-      if( eltOS.top >= (wp.t-threshold) 
+      if( eltOS.top >= (wp.t-threshold)
         && (eltOS.top+th) <= (wp.t+wp.h+threshold)
-        && eltOS.left >= (wp.l-threshold) 
+        && eltOS.left >= (wp.l-threshold)
         && (eltOS.left+tw) <= (wp.l+wp.w+threshold) ) {
         return true;
       }
@@ -8404,7 +8879,7 @@ console.log('lH: '+lH);
 
       if( wp.t == 0 && (eltOS.top) <= (wp.t+wp.h ) ) { return true; }
 
-      if( eltOS.top >= (wp.t) 
+      if( eltOS.top >= (wp.t)
         && (eltOS.top+th) <= (wp.t+wp.h-threshold) ) {
           return true;
       }
@@ -8438,22 +8913,22 @@ console.log('lH: '+lH);
       jQuery(elt1).css('z-index',highest_index);
     }
 
-    
+
     // return the real type of the object
     var toType = function( obj ) {
       // by Angus Croll - http://javascriptweblog.wordpress.com/2011/08/08/fixing-the-javascript-typeof-operator/
       return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase()
     };
-    
+
   }
-  
-  
-  
+
+
+
 // END NANOGALLERY2
 }( jQuery ));
-  
-  
-  
+
+
+
 //##########################################################################################################################
 //##########################################################################################################################
 //##########################################################################################################################
@@ -8975,23 +9450,23 @@ return ngImagesLoaded;
 //##########################################################################################################################
 
 // screenfull.js
-// v1.1.0
+// v3.2.0
 // by sindresorhus - https://github.com/sindresorhus
 // from: https://github.com/sindresorhus/screenfull.js
 
 // NGY BUILD:
 // replace "screenfull" with "ngscreenfull"
-// 
+//
 
 (function () {
 	'use strict';
 
+	var document = typeof window === 'undefined' ? {} : window.document;
 	var isCommonjs = typeof module !== 'undefined' && module.exports;
 	var keyboardAllowed = typeof Element !== 'undefined' && 'ALLOW_KEYBOARD_INPUT' in Element;
 
 	var fn = (function () {
 		var val;
-		var valLength;
 
 		var fnMap = [
 			[
@@ -9002,7 +9477,7 @@ return ngImagesLoaded;
 				'fullscreenchange',
 				'fullscreenerror'
 			],
-			// new WebKit
+			// New WebKit
 			[
 				'webkitRequestFullscreen',
 				'webkitExitFullscreen',
@@ -9012,7 +9487,7 @@ return ngImagesLoaded;
 				'webkitfullscreenerror'
 
 			],
-			// old WebKit (Safari 5.1)
+			// Old WebKit (Safari 5.1)
 			[
 				'webkitRequestFullScreen',
 				'webkitCancelFullScreen',
@@ -9047,7 +9522,7 @@ return ngImagesLoaded;
 		for (; i < l; i++) {
 			val = fnMap[i];
 			if (val && val[1] in document) {
-				for (i = 0, valLength = val.length; i < valLength; i++) {
+				for (i = 0; i < val.length; i++) {
 					ret[fnMap[0][i]] = val[i];
 				}
 				return ret;
@@ -9067,7 +9542,7 @@ return ngImagesLoaded;
 			// keyboard in fullscreen even though it doesn't.
 			// Browser sniffing, since the alternative with
 			// setTimeout is even worse.
-			if (/5\.1[\.\d]* Safari/.test(navigator.userAgent)) {
+			if (/5\.1[.\d]* Safari/.test(navigator.userAgent)) {
 				elem[request]();
 			} else {
 				elem[request](keyboardAllowed && Element.ALLOW_KEYBOARD_INPUT);
@@ -9082,6 +9557,12 @@ return ngImagesLoaded;
 			} else {
 				this.request(elem);
 			}
+		},
+		onchange: function (callback) {
+			document.addEventListener(fn.fullscreenchange, callback, false);
+		},
+		onerror: function (callback) {
+			document.addEventListener(fn.fullscreenerror, callback, false);
 		},
 		raw: fn
 	};
@@ -9124,20 +9605,21 @@ return ngImagesLoaded;
 	}
 })();
 
-  
+
+
 //##########################################################################################################################
 //##########################################################################################################################
 //##########################################################################################################################
 //##########################################################################################################################
 //##########################################################################################################################
-  
+
  /*!
  * Shifty
  * By Jeremy Kahn - jeremyckahn@gmail.com
  */
 
 // NGY BUILD:
-// 
+//
 // replace "Tweenable" with "NGTweenable"
 // replace "define.amd" with "define.amdDISABLED"
 /*! shifty - v1.5.0 - 2015-05-31 - http://jeremyckahn.github.io/shifty */
@@ -11816,7 +12298,7 @@ if (typeof define === 'function' && define.amd) {
 (function(){
   'use strict';
   jQuery(document).ready(function () {
-  
+
     // var t=document.querySelectorAll('[data-nanogallery2-portable]');
     // if( t.length > 0 ) {
       // portable mode
@@ -11838,7 +12320,6 @@ if (typeof define === 'function' && define.amd) {
         jQuery(t[i]).nanogallery2(jQuery(t[i]).data('nanogallery2'));
       }
     // }
-    
+
   });
 }).call(null);
-

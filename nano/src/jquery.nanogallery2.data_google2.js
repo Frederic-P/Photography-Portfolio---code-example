@@ -198,12 +198,12 @@
       // iterate and parse each item
       jQuery.each(data.feed.entry, function(i,data){
 
-      //Get the title 
+        // Get the title 
         var imgUrl=data.media$group.media$content[0].url;
         var itemTitle = data.title.$t;
 
         
-        //Get the description
+        // Get the description
         var filename='';
         var itemDescription = data.media$group.media$description.$t;
         if( kind == 'image') {
@@ -222,7 +222,7 @@
         var itemID = data.gphoto$id.$t;
         if( !(kind == 'album' && !FilterAlbumName(itemTitle, itemID)) ) {
 
-        var newItem=NGY2Item.New( G, itemTitle, itemDescription, itemID, albumID, kind, '' );
+          var newItem=NGY2Item.New( G, itemTitle, itemDescription, itemID, albumID, kind, '' );
           // set the image src
           var src='';
           if( kind == 'image' ) {
@@ -291,7 +291,7 @@
           newItem.thumbs=GoogleThumbSetSizes('lN', 5, newItem.thumbs, data, kind );
           
           if( typeof G.O.fnProcessData == 'function' ) {
-            G.O.fnProcessData(newItem, 'google', data);
+            G.O.fnProcessData(newItem, 'google2', data);
           }
         }
       });
